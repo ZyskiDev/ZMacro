@@ -2,7 +2,6 @@ package net.zyski.zmacro.client.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.MappedByteBuffer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 

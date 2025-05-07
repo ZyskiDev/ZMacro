@@ -3,7 +3,6 @@ package net.zyski.zmacro.client.screen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.RenderType;
@@ -13,21 +12,19 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.FormattedCharSequence;
-import net.zyski.zmacro.client.Macro.ZMacro;
 import net.zyski.zmacro.client.ZmacroClient;
-import net.zyski.zmacro.client.util.MacroMetadata;
+import net.zyski.zmacro.client.util.MacroWrapper;
 
 import java.util.List;
-import java.util.Map;
 
 public class MacroSelectionScreen extends Screen {
     private final Screen parent;
-    private final Map<ZMacro, MacroMetadata> macros;
+    private final List<MacroWrapper> macros;
     private MacroListWidget macroList;
 
     private static final ResourceLocation DEFAULT_ICON = ResourceLocation.withDefaultNamespace("textures/item/paper.png");
 
-    public MacroSelectionScreen(Map<ZMacro, MacroMetadata> macros, Screen parent) {
+    public MacroSelectionScreen(List<MacroWrapper> macros, Screen parent) {
         super(Component.literal("Macro Selector"));
         this.macros = macros;
         this.parent = parent;
@@ -44,34 +41,12 @@ public class MacroSelectionScreen extends Screen {
                 this
         );
 
-        macros.forEach((macro, meta) ->
-                macroList.addMacroEntry(macro, meta)
+        macros.forEach((wrapper) ->
+                macroList.addMacroEntry(wrapper)
         );
 
         this.addRenderableWidget(macroList);
 
-//        this.addRenderableWidget(Button.builder(
-//                Component.literal("Run Selected"),
-//                button -> {
-//                    Minecraft.getInstance().player.displayClientMessage(Component.literal("Sheeeesh"), false);
-//                    MacroListWidget.Entry selected = macroList.getSelected();
-//                    if (selected != null) {
-//                        Minecraft.getInstance().player.displayClientMessage(Component.literal("Selected :) "), false);
-//                        ZmacroClient.getInstance().setSelected(selected.macro);
-//                        onClose();
-//                    }else{
-//                        Minecraft.getInstance().player.displayClientMessage(Component.literal("No Selected :( "), false);
-//
-//                    }
-//                }
-//        ).bounds(width / 2 - 154, height - 28, 150, 20).build());
-//
-//        this.addRenderableWidget(Button.builder(
-//                Component.literal("Close"),
-//                button ->{ onClose();             Minecraft.getInstance().player.displayClientMessage(Component.literal("Clicked Close"), false);
-//                }
-//
-//        ).bounds(width / 2 + 4, height - 28, 150, 20).build());
     }
 
 
@@ -106,8 +81,8 @@ public class MacroSelectionScreen extends Screen {
             this.parentScreen = parentScreen;
         }
 
-        public void addMacroEntry(ZMacro macro, MacroMetadata meta) {
-            this.addEntry(new Entry(macro, meta));
+        public void addMacroEntry(MacroWrapper wrapper) {
+            this.addEntry(new Entry(wrapper));
         }
 
         protected int getScrollbarPosition() {
@@ -127,15 +102,13 @@ public class MacroSelectionScreen extends Screen {
         }
 
         public class Entry extends ObjectSelectionList.Entry<Entry> {
-            private final ZMacro macro;
-            private final MacroMetadata meta;
+            private final MacroWrapper macro;
             private final Minecraft minecraft = Minecraft.getInstance();
             private ResourceLocation fetchedIcon;
 
-            public Entry(ZMacro macro, MacroMetadata meta) {
-                this.macro = macro;
-                this.meta = meta;
-                ResourceLocation temp =  ResourceLocation.withDefaultNamespace(meta.getIcon());
+            public Entry(MacroWrapper wrapper) {
+                this.macro = wrapper;
+                ResourceLocation temp =  ResourceLocation.withDefaultNamespace(macro.getIcon());
                 ResourceManager manager = Minecraft.getInstance().getResourceManager();
                 if(manager.getResource(temp).isPresent()){
                     fetchedIcon = temp;
@@ -162,12 +135,12 @@ public class MacroSelectionScreen extends Screen {
                 Font font = minecraft.font;
 
 
-                MutableComponent name = Component.literal(meta.getName()+"    "+ meta.getVersion()).setStyle(Style.EMPTY.withBold(true));
+                MutableComponent name = Component.literal(macro.getName()+"    "+ macro.getVersion()).setStyle(Style.EMPTY.withBold(true));
                 gui.drawString(font, name, textLeft, top + PADDING, 0xFFFFFF, false);
 
 
                 List<FormattedCharSequence> descriptionLines = font.split(
-                        Component.literal(meta.getDescription()).withStyle(Style.EMPTY.withColor(0xAAAAAA)),
+                        Component.literal(macro.getDescription()).withStyle(Style.EMPTY.withColor(0xAAAAAA)),
                         textWidth
                 );
 
@@ -180,7 +153,7 @@ public class MacroSelectionScreen extends Screen {
             @Override
             public boolean mouseClicked(double mouseX, double mouseY, int button) {
                 if (button == 0) {
-                    ZmacroClient.getInstance().setSelected(this.macro);
+                    ZmacroClient.getInstance().setSelected(this.macro.getMacro());
                     Minecraft.getInstance().setScreen(null);
                     return true;
                 }
@@ -189,7 +162,7 @@ public class MacroSelectionScreen extends Screen {
 
             @Override
             public Component getNarration() {
-                return Component.literal(meta.getName() + ": " + meta.getDescription());
+                return Component.literal(macro.getName() + ": " + macro.getDescription());
             }
         }
     }
