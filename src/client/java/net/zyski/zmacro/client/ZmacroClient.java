@@ -34,6 +34,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
 
+
 public class ZmacroClient implements ClientModInitializer {
 
     private List<MacroWrapper> loadedMacros = new ArrayList<>();

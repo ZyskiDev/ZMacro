@@ -4,7 +4,7 @@
   "package": "net.zyski.zmacro.client.mixins",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "ChatScreenMixin"
+    "ScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 1
