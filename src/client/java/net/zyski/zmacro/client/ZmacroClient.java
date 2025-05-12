@@ -39,6 +39,8 @@ public class ZmacroClient implements ClientModInitializer {
 
     private List<MacroWrapper> loadedMacros = new ArrayList<>();
     private List<MemoryMappedClassLoader> activeClassLoaders = new ArrayList<>();
+    public boolean blockMouseGrabbing = false;
+
     ZMacro selected = null;
     File directory;
 

@@ -5,6 +5,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.multiplayer.chat.ChatLog;
 import net.minecraft.client.multiplayer.chat.LoggedChatMessage;
 import net.minecraft.network.chat.Component;
+import net.zyski.zmacro.client.ZmacroClient;
 import net.zyski.zmacro.client.chat.ChatEvent;
 
 import java.time.Instant;
@@ -30,5 +31,10 @@ public interface ZMacro {
         ChatLog chatlog = Minecraft.getInstance().getReportingContext().chatLog();
         chatlog.push(LoggedChatMessage.system(Component.literal(text), Instant.now()));
     }
+
+    default void setMouseGrab(boolean shouldGrab){
+        ZmacroClient.getInstance().blockMouseGrabbing = !shouldGrab;
+    }
+
 
 }
