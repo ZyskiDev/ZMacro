@@ -34,9 +34,12 @@ import java.nio.file.Files;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executors;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
+import static com.mojang.text2speech.Narrator.LOGGER;
 
 
 public class ZmacroClient implements ClientModInitializer {
@@ -188,29 +191,29 @@ public class ZmacroClient implements ClientModInitializer {
         selected.toggle();
     }
 
-
     public void loadMacrosAsync(File directory) {
         Minecraft.getInstance().execute(() -> {
-            if (Minecraft.getInstance().player != null)
-                Minecraft.getInstance().player.displayClientMessage(
-                        Component.literal("Attempting to reload macros..."), false);
-        });
-        CompletableFuture.runAsync(() -> {
-            try {
-                loadMacrosFromFolder(directory);
-            } catch (IOException e) {
-                Minecraft.getInstance().execute(() -> {
-                    throw new RuntimeException(e);
-                });
+            if (Minecraft.getInstance().player != null) {
+                message("Attempting to reload macros...");
             }
-        }).thenRunAsync(() -> {
-            if (Minecraft.getInstance().player != null)
-                Minecraft.getInstance().player.displayClientMessage(
-                        Component.literal("Macros loaded successfully! (" + loadedMacros.size() + ")"), false
-                );
-        }, Minecraft.getInstance());
+        });
+        CompletableFuture.supplyAsync(() -> {
+                    try {
+                        loadMacrosFromFolder(directory);
+                        return loadedMacros.size();
+                    } catch (IOException e) {
+                        throw new CompletionException(e);
+                    }
+                }, Executors.newCachedThreadPool())
+                .whenCompleteAsync((count, throwable) -> {
+                    if (throwable != null) {
+                       message("Failed to load macros: " + throwable.getCause().getMessage());
+                        LOGGER.error("Macro loading failed", throwable);
+                    } else {
+                        message("Macros loaded successfully! (" + count + ")");
+                    }
+                }, Minecraft.getInstance());
     }
-
 
     public void loadMacrosFromFolder(File macrosFolder) throws IOException {
         releaseAllMacros();
@@ -221,18 +224,19 @@ public class ZmacroClient implements ClientModInitializer {
         for (File jarFile : jarFiles) {
             byte[] jarBytes = Files.readAllBytes(jarFile.toPath());
 
-            MemoryMappedClassLoader classLoader = new MemoryMappedClassLoader(
+            try (MemoryMappedClassLoader classLoader = new MemoryMappedClassLoader(
                     jarBytes,
                     jarFile.getName(),
                     getClass().getClassLoader()
-            );
-            activeClassLoaders.add(classLoader);
+            )) {
+                activeClassLoaders.add(classLoader);
 
-            try (JarInputStream jarStream = new JarInputStream(new ByteArrayInputStream(jarBytes))) {
-                JarEntry entry;
-                while ((entry = jarStream.getNextJarEntry()) != null) {
-                    if (!entry.isDirectory() && entry.getName().endsWith(".class")) {
-                        processJarEntry(classLoader, entry);
+                try (JarInputStream jarStream = new JarInputStream(new ByteArrayInputStream(jarBytes))) {
+                    JarEntry entry;
+                    while ((entry = jarStream.getNextJarEntry()) != null) {
+                        if (!entry.isDirectory() && entry.getName().endsWith(".class")) {
+                            processJarEntry(classLoader, entry);
+                        }
                     }
                 }
             }
@@ -265,10 +269,18 @@ public class ZmacroClient implements ClientModInitializer {
     }
 
     public void releaseAllMacros() {
+        for (ClassLoader loader : activeClassLoaders) {
+            if (loader instanceof AutoCloseable) {
+                try {
+                    ((AutoCloseable) loader).close();
+                } catch (Exception e) {
+                    LOGGER.error("Failed to close classloader", e);
+                }
+            }
+        }
+
         loadedMacros.clear();
         activeClassLoaders.clear();
-
-        System.gc();
     }
 
     private void message(String message){
