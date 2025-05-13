@@ -2,6 +2,7 @@ package net.zyski.zmacro.client;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -11,9 +12,11 @@ import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.PlayerChatMessage;
+import net.minecraft.resources.ResourceLocation;
 import net.zyski.zmacro.client.Macro.Macro;
 import net.zyski.zmacro.client.Macro.ZMacro;
 import net.zyski.zmacro.client.chat.GameChatEvent;
@@ -46,7 +49,7 @@ public class ZmacroClient implements ClientModInitializer {
 
     private static ZmacroClient instance;
 
-    public static KeyMapping OPEN_GUI = KeyBindingHelper.registerKeyBinding(
+    public KeyMapping OPEN_GUI = KeyBindingHelper.registerKeyBinding(
             new KeyMapping("net.ZMacro.open_gui", InputConstants.Type.KEYSYM, InputConstants.KEY_EQUALS, "ZMacro")
     );
 
@@ -94,9 +97,12 @@ public class ZmacroClient implements ClientModInitializer {
     private void registerKeyBindThread() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (OPEN_GUI.consumeClick()) {
-                client.setScreen(new MacroSelectionScreen(loadedMacros, client.screen));
+                if(selected == null || !selected.isActive()){
+                    client.setScreen(new MacroSelectionScreen(loadedMacros, client.screen));
+                }else if(selected != null && selected.isActive()){
+                    selected.toggle();
+                }
             }
-
         });
     }
 
@@ -109,8 +115,44 @@ public class ZmacroClient implements ClientModInitializer {
 
     private void registerGraphicsThread() {
         HudRenderCallback.EVENT.register((guiGraphics, deltaTracker) -> {
-            if(selected != null && selected.isActive())
+            if(selected != null && selected.isActive()) {
                 selected.onRender(guiGraphics);
+                //also render stop UI
+                if(Minecraft.getInstance().screen == null) {
+                    Minecraft client = Minecraft.getInstance();
+                    RenderSystem.enableBlend();
+
+
+                    int spriteSize = 32;
+                    int x = (guiGraphics.guiWidth() / 2) - (spriteSize / 2);
+                    int y = guiGraphics.guiHeight() - 70;
+                    guiGraphics.blit(RenderType::guiTextured,
+                            ResourceLocation.fromNamespaceAndPath("zmacro", "textures/stop.png"),
+                            x, // Centered horizontally
+                            y,
+                            0, 0, spriteSize, spriteSize, spriteSize, spriteSize
+                    );
+
+                    String keyText = "[ " + ZmacroClient.getInstance().OPEN_GUI.getTranslatedKeyMessage().getString() + " ]";
+                    guiGraphics.drawString(
+                            client.font,
+                            keyText,
+                            x + (spriteSize / 2) - (client.font.width(keyText) / 2),
+                            y + (spriteSize / 2) - 4,
+                            0xFFFFFF,
+                            true
+                    );
+                    String stopText = "STOP MACRO";
+                    guiGraphics.drawString(
+                            client.font,
+                            stopText,
+                            x + (spriteSize / 2) - (client.font.width(stopText) / 2),
+                            y + 5 + (spriteSize) - 4,
+                            0xFFFFFF,
+                            true
+                    );
+
+                }     }
         });
     }
 
