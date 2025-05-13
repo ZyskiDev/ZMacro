@@ -9,9 +9,13 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
@@ -118,7 +122,15 @@ public class ZmacroClient implements ClientModInitializer {
     }
 
     private void registerGraphicsThread() {
-        HudRenderCallback.EVENT.register((guiGraphics, deltaTracker) -> {
+        HudLayerRegistrationCallback.EVENT.register(drawer -> {
+            drawer.addLayer(new IdentifiedLayer() {
+                @Override
+                public ResourceLocation id() {
+                    return ResourceLocation.fromNamespaceAndPath("zmacro", "macro_layer");
+                }
+
+                @Override
+                public void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
             if(selected != null && selected.isActive()) {
                 selected.onRender(guiGraphics);
 
@@ -137,7 +149,7 @@ public class ZmacroClient implements ClientModInitializer {
                             0, 0, spriteSize, spriteSize, spriteSize, spriteSize
                     );
 
-                    String keyText = "[" + ZmacroClient.getInstance().OPEN_GUI.getTranslatedKeyMessage().getString() + "]";
+                    String keyText = "[" + OPEN_GUI.getTranslatedKeyMessage().getString() + "]";
                     guiGraphics.drawString(
                             client.font,
                             keyText,
@@ -157,7 +169,10 @@ public class ZmacroClient implements ClientModInitializer {
                             true
                     );
 
-                }     }
+                }
+                }
+            }}
+            );
         });
     }
 
@@ -264,7 +279,7 @@ public class ZmacroClient implements ClientModInitializer {
 
             }
         } catch (Exception e) {
-            System.err.println("Failed to process " + className);
+            message("Failed to process " + className);
         }
     }
 
