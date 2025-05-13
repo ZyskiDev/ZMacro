@@ -125,7 +125,7 @@ public class ZmacroClient implements ClientModInitializer {
 
                     int spriteSize = 32;
                     int x = (guiGraphics.guiWidth() / 2) - (spriteSize / 2);
-                    int y = guiGraphics.guiHeight() - 70;
+                    int y = guiGraphics.guiHeight() - 90;
                     guiGraphics.blit(RenderType::guiTextured,
                             ResourceLocation.fromNamespaceAndPath("zmacro", "textures/stop.png"),
                             x, // Centered horizontally

@@ -50,7 +50,7 @@ public abstract class ScreenMixin {
             RenderSystem.enableBlend();
             int spriteSize = 32;
             int x = (gui.guiWidth() / 2) - (spriteSize / 2);
-            int y = gui.guiHeight() - 70;
+            int y = gui.guiHeight() - 90;
             gui.blit(RenderType::guiTextured,
                     ResourceLocation.fromNamespaceAndPath("zmacro", "textures/stop.png"),
                     x, // Centered horizontally
