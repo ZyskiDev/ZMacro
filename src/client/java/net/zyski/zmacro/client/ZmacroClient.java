@@ -24,6 +24,7 @@ import net.zyski.zmacro.client.chat.PlayerChatEvent;
 import net.zyski.zmacro.client.screen.MacroSelectionScreen;
 import net.zyski.zmacro.client.util.MacroWrapper;
 import net.zyski.zmacro.client.util.MemoryMappedClassLoader;
+import net.zyski.zmacro.client.util.Resources;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
@@ -117,7 +118,7 @@ public class ZmacroClient implements ClientModInitializer {
         HudRenderCallback.EVENT.register((guiGraphics, deltaTracker) -> {
             if(selected != null && selected.isActive()) {
                 selected.onRender(guiGraphics);
-                //also render stop UI
+
                 if(Minecraft.getInstance().screen == null) {
                     Minecraft client = Minecraft.getInstance();
                     RenderSystem.enableBlend();
@@ -127,13 +128,13 @@ public class ZmacroClient implements ClientModInitializer {
                     int x = (guiGraphics.guiWidth() / 2) - (spriteSize / 2);
                     int y = guiGraphics.guiHeight() - 90;
                     guiGraphics.blit(RenderType::guiTextured,
-                            ResourceLocation.fromNamespaceAndPath("zmacro", "textures/stop.png"),
-                            x, // Centered horizontally
+                            Resources.STOP_BUTTON,
+                            x,
                             y,
                             0, 0, spriteSize, spriteSize, spriteSize, spriteSize
                     );
 
-                    String keyText = "[ " + ZmacroClient.getInstance().OPEN_GUI.getTranslatedKeyMessage().getString() + " ]";
+                    String keyText = "[" + ZmacroClient.getInstance().OPEN_GUI.getTranslatedKeyMessage().getString() + "]";
                     guiGraphics.drawString(
                             client.font,
                             keyText,
@@ -142,6 +143,7 @@ public class ZmacroClient implements ClientModInitializer {
                             0xFFFFFF,
                             true
                     );
+
                     String stopText = "STOP MACRO";
                     guiGraphics.drawString(
                             client.font,

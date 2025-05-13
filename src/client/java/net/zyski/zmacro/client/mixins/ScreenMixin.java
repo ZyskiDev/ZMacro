@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.zyski.zmacro.client.ZmacroClient;
+import net.zyski.zmacro.client.util.Resources;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -27,21 +28,6 @@ import java.lang.reflect.Field;
 @Mixin(Screen.class)
 public abstract class ScreenMixin {
 
-    @Shadow protected abstract <T extends GuiEventListener & Renderable & NarratableEntry> T addRenderableWidget(T guiEventListener);
-
-    @Shadow protected abstract void removeWidget(GuiEventListener guiEventListener);
-
-    @Shadow public int width;
-    @Shadow public int height;
-
-     final ResourceLocation STOP_SPRITE = ResourceLocation.fromNamespaceAndPath("zmacro","textures/stop.png");
-
-
-    @Inject(method = "init", at = @At("TAIL"))
-    private void onInit(CallbackInfo ci) {
-
-    }
-
 
     @Inject(method = "render", at = @At("TAIL"))
     private void onRender(GuiGraphics gui, int mouseX, int mouseY, float delta, CallbackInfo ci) {
@@ -52,13 +38,13 @@ public abstract class ScreenMixin {
             int x = (gui.guiWidth() / 2) - (spriteSize / 2);
             int y = gui.guiHeight() - 90;
             gui.blit(RenderType::guiTextured,
-                    ResourceLocation.fromNamespaceAndPath("zmacro", "textures/stop.png"),
-                    x, // Centered horizontally
+                    Resources.STOP_BUTTON,
+                    x,
                     y,
                     0, 0, spriteSize, spriteSize, spriteSize, spriteSize
             );
 
-            String keyText = "[ " + ZmacroClient.getInstance().OPEN_GUI.getTranslatedKeyMessage().getString() + " ]";
+            String keyText = "[" + ZmacroClient.getInstance().OPEN_GUI.getTranslatedKeyMessage().getString() + "]";
             gui.drawString(
                     client.font,
                     keyText,
