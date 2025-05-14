@@ -1,6 +1,5 @@
 package net.zyski.zmacro.client;
 
-import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.api.ClientModInitializer;
@@ -10,16 +9,13 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.PlayerChatMessage;
 import net.minecraft.resources.ResourceLocation;
 import net.zyski.zmacro.client.Macro.Macro;
 import net.zyski.zmacro.client.Macro.ZMacro;
@@ -29,13 +25,11 @@ import net.zyski.zmacro.client.screen.MacroSelectionScreen;
 import net.zyski.zmacro.client.util.MacroWrapper;
 import net.zyski.zmacro.client.util.MemoryMappedClassLoader;
 import net.zyski.zmacro.client.util.Resources;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -79,26 +73,20 @@ public class ZmacroClient implements ClientModInitializer {
     }
 
     private void registerChatListenerThread() {
-        ClientReceiveMessageEvents.ALLOW_GAME.register(new ClientReceiveMessageEvents.AllowGame() {
-            @Override
-            public boolean allowReceiveGameMessage(Component message, boolean overlay) {
-                GameChatEvent event = new GameChatEvent(message, overlay);
-                if(selected != null && selected.isActive()){
-                    selected.onChat(event);
-                }
-                return true;
+        ClientReceiveMessageEvents.ALLOW_GAME.register((message, overlay) -> {
+            GameChatEvent event = new GameChatEvent(message, overlay);
+            if(selected != null && selected.isActive()){
+                selected.onChat(event);
             }
+            return true;
         });
 
-        ClientReceiveMessageEvents.ALLOW_CHAT.register(new ClientReceiveMessageEvents.AllowChat() {
-            @Override
-            public boolean allowReceiveChatMessage(Component component, @Nullable PlayerChatMessage playerChatMessage, @Nullable GameProfile gameProfile, ChatType.Bound bound, Instant instant) {
-                PlayerChatEvent event = new PlayerChatEvent(component, playerChatMessage, gameProfile, bound, instant);
-                if(selected != null && selected.isActive()){
-                    selected.onChat(event);
-                }
-                return true;
+        ClientReceiveMessageEvents.ALLOW_CHAT.register((component, playerChatMessage, gameProfile, bound, instant) -> {
+            PlayerChatEvent event = new PlayerChatEvent(component, playerChatMessage, gameProfile, bound, instant);
+            if(selected != null && selected.isActive()){
+                selected.onChat(event);
             }
+            return true;
         });
     }
 
@@ -122,58 +110,56 @@ public class ZmacroClient implements ClientModInitializer {
     }
 
     private void registerGraphicsThread() {
-        HudLayerRegistrationCallback.EVENT.register(drawer -> {
-            drawer.addLayer(new IdentifiedLayer() {
-                @Override
-                public ResourceLocation id() {
-                    return ResourceLocation.fromNamespaceAndPath("zmacro", "macro_layer");
-                }
+        HudLayerRegistrationCallback.EVENT.register(drawer -> drawer.addLayer(new IdentifiedLayer() {
+            @Override
+            public ResourceLocation id() {
+                return ResourceLocation.fromNamespaceAndPath("zmacro", "macro_layer");
+            }
 
-                @Override
-                public void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
-            if(selected != null && selected.isActive()) {
-                selected.onRender(guiGraphics);
+            @Override
+            public void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+        if(selected != null && selected.isActive()) {
+            selected.onRender(guiGraphics);
 
-                if(Minecraft.getInstance().screen == null) {
-                    Minecraft client = Minecraft.getInstance();
-                    RenderSystem.enableBlend();
+            if(Minecraft.getInstance().screen == null) {
+                Minecraft client = Minecraft.getInstance();
+                RenderSystem.enableBlend();
 
 
-                    int spriteSize = 32;
-                    int x = (guiGraphics.guiWidth() / 2) - (spriteSize / 2);
-                    int y = guiGraphics.guiHeight() - 90;
-                    guiGraphics.blit(RenderType::guiTextured,
-                            Resources.STOP_BUTTON,
-                            x,
-                            y,
-                            0, 0, spriteSize, spriteSize, spriteSize, spriteSize
-                    );
+                int spriteSize = 32;
+                int x = (guiGraphics.guiWidth() / 2) - (spriteSize / 2);
+                int y = guiGraphics.guiHeight() - 90;
+                guiGraphics.blit(RenderType::guiTextured,
+                        Resources.STOP_BUTTON,
+                        x,
+                        y,
+                        0, 0, spriteSize, spriteSize, spriteSize, spriteSize
+                );
 
-                    String keyText = "[" + OPEN_GUI.getTranslatedKeyMessage().getString() + "]";
-                    guiGraphics.drawString(
-                            client.font,
-                            keyText,
-                            x + (spriteSize / 2) - (client.font.width(keyText) / 2),
-                            y + (spriteSize / 2) - 4,
-                            0xFFFFFF,
-                            true
-                    );
+                String keyText = "[" + OPEN_GUI.getTranslatedKeyMessage().getString() + "]";
+                guiGraphics.drawString(
+                        client.font,
+                        keyText,
+                        x + (spriteSize / 2) - (client.font.width(keyText) / 2),
+                        y + (spriteSize / 2) - 4,
+                        0xFFFFFF,
+                        true
+                );
 
-                    String stopText = "STOP MACRO";
-                    guiGraphics.drawString(
-                            client.font,
-                            stopText,
-                            x + (spriteSize / 2) - (client.font.width(stopText) / 2),
-                            y + 5 + (spriteSize) - 4,
-                            0xFFFFFF,
-                            true
-                    );
+                String stopText = "STOP MACRO";
+                guiGraphics.drawString(
+                        client.font,
+                        stopText,
+                        x + (spriteSize / 2) - (client.font.width(stopText) / 2),
+                        y + 5 + (spriteSize) - 4,
+                        0xFFFFFF,
+                        true
+                );
 
-                }
-                }
-            }}
-            );
-        });
+            }
+            }
+        }}
+        ));
     }
 
     private void registerCommands() {

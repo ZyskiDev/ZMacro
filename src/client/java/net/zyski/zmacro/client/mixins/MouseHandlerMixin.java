@@ -17,4 +17,14 @@ public class MouseHandlerMixin {
         }
     }
 
+
+    @Inject(method = "onPress", at = @At("HEAD"), cancellable = true)
+    private void onMousePress(long window, int button, int action, int mods, CallbackInfo ci) {
+        if (ZmacroClient.getInstance().blockMouseGrabbing) {
+            if ((button == 0 || button == 1) && action == 1) {
+                ci.cancel();
+            }
+        }
+    }
+
 }

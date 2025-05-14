@@ -14,6 +14,7 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.FormattedCharSequence;
 import net.zyski.zmacro.client.ZmacroClient;
 import net.zyski.zmacro.client.util.MacroWrapper;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -36,8 +37,6 @@ public class MacroSelectionScreen extends Screen {
                 Minecraft.getInstance(),
                 this.width,
                 this.height,
-                32,
-                this.height - 64,
                 this
         );
 
@@ -76,7 +75,7 @@ public class MacroSelectionScreen extends Screen {
 
         private final MacroSelectionScreen parentScreen;
 
-        public MacroListWidget(Minecraft client, int width, int height, int top, int bottom, MacroSelectionScreen parentScreen) {
+        public MacroListWidget(Minecraft client, int width, int height, MacroSelectionScreen parentScreen) {
             super(client, width , height, 33, 36, (int) (9.0F * 1.5F));// Fixed row height
             this.parentScreen = parentScreen;
         }
@@ -93,7 +92,6 @@ public class MacroSelectionScreen extends Screen {
         @Override
         public void onClick(double d, double e) {
             super.onClick(d, e);
-            Minecraft.getInstance().player.displayClientMessage(Component.literal("Clicked List"), false);
         }
 
         @Override
@@ -145,7 +143,7 @@ public class MacroSelectionScreen extends Screen {
                 );
 
                 if (!descriptionLines.isEmpty()) {
-                    gui.drawString(font, descriptionLines.get(0), textLeft, top + PADDING + 12, 0xAAAAAA, false);
+                    gui.drawString(font, descriptionLines.getFirst(), textLeft, top + PADDING + 12, 0xAAAAAA, false);
                 }
             }
 
@@ -161,7 +159,7 @@ public class MacroSelectionScreen extends Screen {
             }
 
             @Override
-            public Component getNarration() {
+            public @NotNull Component getNarration() {
                 return Component.literal(macro.getName() + ": " + macro.getDescription());
             }
         }
