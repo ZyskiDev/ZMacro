@@ -2,11 +2,10 @@ package net.zyski.zmacro.client.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
-
 import java.util.HashMap;
 import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
 
 public class MemoryMappedClassLoader extends ClassLoader implements AutoCloseable {
     private final byte[] jarData;

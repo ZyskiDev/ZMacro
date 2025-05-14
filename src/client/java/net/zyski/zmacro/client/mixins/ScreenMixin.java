@@ -20,7 +20,7 @@ public abstract class ScreenMixin {
 
     @Inject(method = "render", at = @At("TAIL"))
     private void onRender(GuiGraphics gui, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-        if(ZmacroClient.getInstance().getSelected() != null && ZmacroClient.getInstance().getSelected().isActive()) {
+        if (ZmacroClient.getInstance().getSelected() != null && ZmacroClient.getInstance().getSelected().isActive()) {
             Minecraft client = Minecraft.getInstance();
             RenderSystem.enableBlend();
             int spriteSize = 32;
@@ -56,7 +56,7 @@ public abstract class ScreenMixin {
 
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
     private void onKeyPressed(int i, int j, int k, CallbackInfoReturnable<Boolean> cir) {
-        if ( ZmacroClient.getInstance().OPEN_GUI.matches(i, j)) {
+        if (ZmacroClient.getInstance().OPEN_GUI.matches(i, j)) {
             if (ZmacroClient.getInstance().isSelectedActive()) {
                 ZmacroClient.getInstance().getSelected().toggle();
                 cir.setReturnValue(true);

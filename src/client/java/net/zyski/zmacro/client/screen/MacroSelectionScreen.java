@@ -19,11 +19,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class MacroSelectionScreen extends Screen {
+    private static final ResourceLocation DEFAULT_ICON = ResourceLocation.withDefaultNamespace("textures/item/paper.png");
     private final Screen parent;
     private final List<MacroWrapper> macros;
     private MacroListWidget macroList;
-
-    private static final ResourceLocation DEFAULT_ICON = ResourceLocation.withDefaultNamespace("textures/item/paper.png");
 
     public MacroSelectionScreen(List<MacroWrapper> macros, Screen parent) {
         super(Component.literal("Macro Selector"));
@@ -76,7 +75,7 @@ public class MacroSelectionScreen extends Screen {
         private final MacroSelectionScreen parentScreen;
 
         public MacroListWidget(Minecraft client, int width, int height, MacroSelectionScreen parentScreen) {
-            super(client, width , height, 33, 36, (int) (9.0F * 1.5F));// Fixed row height
+            super(client, width, height, 33, 36, (int) (9.0F * 1.5F));// Fixed row height
             this.parentScreen = parentScreen;
         }
 
@@ -106,13 +105,12 @@ public class MacroSelectionScreen extends Screen {
 
             public Entry(MacroWrapper wrapper) {
                 this.macro = wrapper;
-                ResourceLocation temp =  ResourceLocation.withDefaultNamespace(macro.getIcon());
+                ResourceLocation temp = ResourceLocation.withDefaultNamespace(macro.getIcon());
                 ResourceManager manager = Minecraft.getInstance().getResourceManager();
-                if(manager.getResource(temp).isPresent()){
+                if (manager.getResource(temp).isPresent()) {
                     fetchedIcon = temp;
                 }
             }
-
 
 
             @Override
@@ -133,7 +131,7 @@ public class MacroSelectionScreen extends Screen {
                 Font font = minecraft.font;
 
 
-                MutableComponent name = Component.literal(macro.getName()+"    "+ macro.getVersion()).setStyle(Style.EMPTY.withBold(true));
+                MutableComponent name = Component.literal(macro.getName() + "    " + macro.getVersion()).setStyle(Style.EMPTY.withBold(true));
                 gui.drawString(font, name, textLeft, top + PADDING, 0xFFFFFF, false);
 
 

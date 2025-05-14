@@ -24,18 +24,32 @@ public class PlayerChatEvent implements ChatEvent {
         this.timestamp = timestamp;
     }
 
-    public Component message() { return message; }
+    public Component message() {
+        return message;
+    }
 
-    public @Nullable PlayerChatMessage playerChatMessage() { return playerChatMessage; }
+    public @Nullable PlayerChatMessage playerChatMessage() {
+        return playerChatMessage;
+    }
 
-    public @Nullable GameProfile profile() { return profile; }
+    public @Nullable GameProfile profile() {
+        return profile;
+    }
 
-    public ChatType.Bound bound() { return bound; }
+    public ChatType.Bound bound() {
+        return bound;
+    }
 
-    public Instant timestamp() { return timestamp; }
+    public Instant timestamp() {
+        return timestamp;
+    }
 
-    public boolean cancel() { return cancel; }
+    public boolean cancel() {
+        return cancel;
+    }
 
-    public void setCancel(boolean cancel) { this.cancel = cancel; }
+    public void setCancel(boolean cancel) {
+        this.cancel = cancel;
+    }
 }
 

@@ -30,7 +30,8 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executors;
@@ -42,18 +43,19 @@ import static com.mojang.text2speech.Narrator.LOGGER;
 
 public class ZmacroClient implements ClientModInitializer {
 
-    private List<MacroWrapper> loadedMacros = new ArrayList<>();
-    private List<MemoryMappedClassLoader> activeClassLoaders = new ArrayList<>();
-    public boolean blockMouseGrabbing = false;
-
-    ZMacro selected = null;
-    File directory;
-
     private static ZmacroClient instance;
-
+    public boolean blockMouseGrabbing = false;
     public KeyMapping OPEN_GUI = KeyBindingHelper.registerKeyBinding(
             new KeyMapping("net.ZMacro.open_gui", InputConstants.Type.KEYSYM, InputConstants.KEY_EQUALS, "ZMacro")
     );
+    ZMacro selected = null;
+    File directory;
+    private List<MacroWrapper> loadedMacros = new ArrayList<>();
+    private List<MemoryMappedClassLoader> activeClassLoaders = new ArrayList<>();
+
+    public static ZmacroClient getInstance() {
+        return instance;
+    }
 
     @Override
     public void onInitializeClient() {
@@ -75,7 +77,7 @@ public class ZmacroClient implements ClientModInitializer {
     private void registerChatListenerThread() {
         ClientReceiveMessageEvents.ALLOW_GAME.register((message, overlay) -> {
             GameChatEvent event = new GameChatEvent(message, overlay);
-            if(selected != null && selected.isActive()){
+            if (selected != null && selected.isActive()) {
                 selected.onChat(event);
             }
             return true;
@@ -83,7 +85,7 @@ public class ZmacroClient implements ClientModInitializer {
 
         ClientReceiveMessageEvents.ALLOW_CHAT.register((component, playerChatMessage, gameProfile, bound, instant) -> {
             PlayerChatEvent event = new PlayerChatEvent(component, playerChatMessage, gameProfile, bound, instant);
-            if(selected != null && selected.isActive()){
+            if (selected != null && selected.isActive()) {
                 selected.onChat(event);
             }
             return true;
@@ -93,9 +95,9 @@ public class ZmacroClient implements ClientModInitializer {
     private void registerKeyBindThread() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (OPEN_GUI.consumeClick()) {
-                if(selected == null || !selected.isActive()){
+                if (selected == null || !selected.isActive()) {
                     client.setScreen(new MacroSelectionScreen(loadedMacros, client.screen));
-                }else if(selected != null && selected.isActive()){
+                } else if (selected != null && selected.isActive()) {
                     selected.toggle();
                 }
             }
@@ -104,69 +106,71 @@ public class ZmacroClient implements ClientModInitializer {
 
     private void registerTickThread() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if(selected != null && selected.isActive())
+            if (selected != null && selected.isActive())
                 selected.loop();
         });
     }
 
     private void registerGraphicsThread() {
-        HudLayerRegistrationCallback.EVENT.register(drawer -> drawer.addLayer(new IdentifiedLayer() {
-            @Override
-            public ResourceLocation id() {
-                return ResourceLocation.fromNamespaceAndPath("zmacro", "macro_layer");
-            }
+        HudLayerRegistrationCallback.EVENT.register(drawer ->
+                drawer.addLayer(new IdentifiedLayer() {
+                                    @Override
+                                    public ResourceLocation id() {
+                                        return ResourceLocation.fromNamespaceAndPath("zmacro", "macro_layer");
+                                    }
 
-            @Override
-            public void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
-        if(selected != null && selected.isActive()) {
-            selected.onRender(guiGraphics);
+                                    @Override
+                                    public void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+                                        if (selected != null && selected.isActive()) {
+                                            selected.onRender(guiGraphics);
 
-            if(Minecraft.getInstance().screen == null) {
-                Minecraft client = Minecraft.getInstance();
-                RenderSystem.enableBlend();
+                                            if (Minecraft.getInstance().screen == null) {
+                                                Minecraft client = Minecraft.getInstance();
+                                                RenderSystem.enableBlend();
 
 
-                int spriteSize = 32;
-                int x = (guiGraphics.guiWidth() / 2) - (spriteSize / 2);
-                int y = guiGraphics.guiHeight() - 90;
-                guiGraphics.blit(RenderType::guiTextured,
-                        Resources.STOP_BUTTON,
-                        x,
-                        y,
-                        0, 0, spriteSize, spriteSize, spriteSize, spriteSize
-                );
+                                                int spriteSize = 32;
+                                                int x = (guiGraphics.guiWidth() / 2) - (spriteSize / 2);
+                                                int y = guiGraphics.guiHeight() - 90;
+                                                guiGraphics.blit(RenderType::guiTextured,
+                                                        Resources.STOP_BUTTON,
+                                                        x,
+                                                        y,
+                                                        0, 0, spriteSize, spriteSize, spriteSize, spriteSize
+                                                );
 
-                String keyText = "[" + OPEN_GUI.getTranslatedKeyMessage().getString() + "]";
-                guiGraphics.drawString(
-                        client.font,
-                        keyText,
-                        x + (spriteSize / 2) - (client.font.width(keyText) / 2),
-                        y + (spriteSize / 2) - 4,
-                        0xFFFFFF,
-                        true
-                );
+                                                String keyText = "[" + OPEN_GUI.getTranslatedKeyMessage().getString() + "]";
+                                                guiGraphics.drawString(
+                                                        client.font,
+                                                        keyText,
+                                                        x + (spriteSize / 2) - (client.font.width(keyText) / 2),
+                                                        y + (spriteSize / 2) - 4,
+                                                        0xFFFFFF,
+                                                        true
+                                                );
 
-                String stopText = "STOP MACRO";
-                guiGraphics.drawString(
-                        client.font,
-                        stopText,
-                        x + (spriteSize / 2) - (client.font.width(stopText) / 2),
-                        y + 5 + (spriteSize) - 4,
-                        0xFFFFFF,
-                        true
-                );
+                                                String stopText = "STOP MACRO";
+                                                guiGraphics.drawString(
+                                                        client.font,
+                                                        stopText,
+                                                        x + (spriteSize / 2) - (client.font.width(stopText) / 2),
+                                                        y + 5 + (spriteSize) - 4,
+                                                        0xFFFFFF,
+                                                        true
+                                                );
 
-            }
-            }
-        }}
-        ));
+                                            }
+                                        }
+                                    }
+                                }
+                ));
     }
 
     private void registerCommands() {
         ClientCommandRegistrationCallback.EVENT.register(((dispatcher, registryAccess) -> {
 
             dispatcher.register(ClientCommandManager.literal("reloadmacros").executes(context -> {
-                if(selected != null && selected.isActive()){
+                if (selected != null && selected.isActive()) {
                     message("Please stop macro before executing reload..");
                     return 1;
                 }
@@ -175,21 +179,16 @@ public class ZmacroClient implements ClientModInitializer {
             }));
 
             dispatcher.register(ClientCommandManager.literal("stopmacro").executes(context -> {
-                if(selected != null && selected.isActive()){
+                if (selected != null && selected.isActive()) {
                     message("Stopping Macro...");
                     selected.toggle();
                     selected = null;
-                }else{
+                } else {
                     message("No Macro Running.");
                 }
                 return 1;
             }));
         }));
-    }
-
-    public void setSelected(ZMacro selected) {
-        this.selected = selected;
-        selected.toggle();
     }
 
     public void loadMacrosAsync(File directory) {
@@ -208,7 +207,7 @@ public class ZmacroClient implements ClientModInitializer {
                 }, Executors.newCachedThreadPool())
                 .whenCompleteAsync((count, throwable) -> {
                     if (throwable != null) {
-                       message("Failed to load macros: " + throwable.getCause().getMessage());
+                        message("Failed to load macros: " + throwable.getCause().getMessage());
                         LOGGER.error("Macro loading failed", throwable);
                     } else {
                         message("Macros loaded successfully! (" + count + ")");
@@ -284,13 +283,9 @@ public class ZmacroClient implements ClientModInitializer {
         activeClassLoaders.clear();
     }
 
-    private void message(String message){
-        if(Minecraft.getInstance().player != null)
+    private void message(String message) {
+        if (Minecraft.getInstance().player != null)
             Minecraft.getInstance().player.displayClientMessage(Component.literal(message), false);
-    }
-
-    public static ZmacroClient getInstance(){
-        return instance;
     }
 
     public boolean isSelectedActive() {
@@ -299,5 +294,10 @@ public class ZmacroClient implements ClientModInitializer {
 
     public ZMacro getSelected() {
         return selected;
+    }
+
+    public void setSelected(ZMacro selected) {
+        this.selected = selected;
+        selected.toggle();
     }
 }

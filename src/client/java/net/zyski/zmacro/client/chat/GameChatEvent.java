@@ -12,12 +12,20 @@ public class GameChatEvent implements ChatEvent {
         this.overlay = overlay;
     }
 
-    public Component message() { return message; }
+    public Component message() {
+        return message;
+    }
 
-    public boolean overlay() { return overlay; }
+    public boolean overlay() {
+        return overlay;
+    }
 
-    public boolean cancel() { return cancel; }
+    public boolean cancel() {
+        return cancel;
+    }
 
-    public void setCancel(boolean cancel) { this.cancel = cancel; }
+    public void setCancel(boolean cancel) {
+        this.cancel = cancel;
+    }
 }
 

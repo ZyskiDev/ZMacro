@@ -21,12 +21,28 @@ public class MacroWrapper {
         this.icon = icon;
     }
 
-    // Getters
-    public ZMacro getMacro() { return macro; }
-    public String getVersion() { return version; }
-    public String getName() { return name; }
-    public String getAuthor() { return author; }
-    public String getDescription() { return description; }
-    public String getIcon() { return icon; }
+    public ZMacro getMacro() {
+        return macro;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getIcon() {
+        return icon;
+    }
 
 }

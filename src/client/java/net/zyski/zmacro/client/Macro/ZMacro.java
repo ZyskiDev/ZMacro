@@ -13,16 +13,20 @@ import java.time.Instant;
 public interface ZMacro {
 
     void start();
+
     void loop();
+
     void stop();
+
     void toggle();
+
     boolean isActive();
 
-    default void onRender(GuiGraphics graphics){
+    default void onRender(GuiGraphics graphics) {
 
     }
 
-    default void onChat(ChatEvent chatEvent){
+    default void onChat(ChatEvent chatEvent) {
 
     }
 
@@ -32,7 +36,7 @@ public interface ZMacro {
         chatlog.push(LoggedChatMessage.system(Component.literal(text), Instant.now()));
     }
 
-    default void setMouseGrab(boolean shouldGrab){
+    default void setMouseGrab(boolean shouldGrab) {
         ZmacroClient.getInstance().blockMouseGrabbing = !shouldGrab;
     }
 
