@@ -4,6 +4,7 @@
   "package": "net.zyski.zmacro.client.mixins",
   "compatibilityLevel": "JAVA_21",
   "client": [
+    "KeyboardHandlerMixin",
     "MouseHandlerMixin",
     "ScreenMixin"
   ],

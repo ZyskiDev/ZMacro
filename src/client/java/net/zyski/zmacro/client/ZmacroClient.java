@@ -1,7 +1,6 @@
 package net.zyski.zmacro.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -39,6 +38,8 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
 import static com.mojang.text2speech.Narrator.LOGGER;
+import static org.lwjgl.opengl.GL11C.GL_BLEND;
+import static org.lwjgl.opengl.GL11C.glEnable;
 
 
 public class ZmacroClient implements ClientModInitializer {
@@ -57,6 +58,7 @@ public class ZmacroClient implements ClientModInitializer {
         return instance;
     }
 
+
     @Override
     public void onInitializeClient() {
         directory = Minecraft.getInstance().gameDirectory.toPath().resolve("ZMacro").toFile();
@@ -73,6 +75,7 @@ public class ZmacroClient implements ClientModInitializer {
         registerChatListenerThread();
         instance = this;
     }
+
 
     private void registerChatListenerThread() {
         ClientReceiveMessageEvents.ALLOW_GAME.register((message, overlay) -> {
@@ -126,7 +129,7 @@ public class ZmacroClient implements ClientModInitializer {
 
                                             if (Minecraft.getInstance().screen == null) {
                                                 Minecraft client = Minecraft.getInstance();
-                                                RenderSystem.enableBlend();
+                                                glEnable(GL_BLEND);
 
 
                                                 int spriteSize = 32;

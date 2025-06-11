@@ -1,6 +1,5 @@
 package net.zyski.zmacro.client.mixins;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -13,6 +12,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import static org.lwjgl.opengl.GL11C.GL_BLEND;
+import static org.lwjgl.opengl.GL11C.glEnable;
+
 
 @Mixin(Screen.class)
 public abstract class ScreenMixin {
@@ -22,7 +24,7 @@ public abstract class ScreenMixin {
     private void onRender(GuiGraphics gui, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         if (ZmacroClient.getInstance().getSelected() != null && ZmacroClient.getInstance().getSelected().isActive()) {
             Minecraft client = Minecraft.getInstance();
-            RenderSystem.enableBlend();
+            glEnable(GL_BLEND);
             int spriteSize = 32;
             int x = (gui.guiWidth() / 2) - (spriteSize / 2);
             int y = gui.guiHeight() - 90;
@@ -62,5 +64,8 @@ public abstract class ScreenMixin {
                 cir.setReturnValue(true);
             }
         }
+//        if(ZmacroClient.getInstance().getSelected() != null && ZmacroClient.getInstance().getSelected().isActive()) {
+//            ZmacroClient.getInstance().getSelected().onKeyPress(i, j, k);
+//        }
     }
 }

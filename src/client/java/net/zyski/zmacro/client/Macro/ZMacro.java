@@ -26,6 +26,10 @@ public interface ZMacro {
 
     }
 
+    default void onKeyPress(int keyCode, int modifiers, int scanCode) {
+
+    }
+
     default void onChat(ChatEvent chatEvent) {
 
     }
