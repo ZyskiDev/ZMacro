@@ -34,6 +34,10 @@ public interface ZMacro {
 
     }
 
+    default void onCommand(String command){
+
+    }
+
     default void message(String text) {
         Minecraft.getInstance().gui.getChat().addMessage(Component.literal(text));
         ChatLog chatlog = Minecraft.getInstance().getReportingContext().chatLog();

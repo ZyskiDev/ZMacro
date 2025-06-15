@@ -1,6 +1,7 @@
 package net.zyski.zmacro.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -170,7 +171,18 @@ public class ZmacroClient implements ClientModInitializer {
     }
 
     private void registerCommands() {
+
         ClientCommandRegistrationCallback.EVENT.register(((dispatcher, registryAccess) -> {
+            dispatcher.register(
+                    ClientCommandManager.literal("zmacro")
+                            .then(ClientCommandManager.argument("args", StringArgumentType.greedyString())
+                                    .executes(ctx -> {
+                                        String allArgs = StringArgumentType.getString(ctx, "args");
+                                        if(selected != null && selected.isActive())
+                                            selected.onCommand(allArgs);
+                                        return 1;
+                                    }))
+            );
 
             dispatcher.register(ClientCommandManager.literal("reloadmacros").executes(context -> {
                 if (selected != null && selected.isActive()) {
