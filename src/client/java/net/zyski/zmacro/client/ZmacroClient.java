@@ -5,18 +5,27 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerBlockEntityEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 import net.zyski.zmacro.client.Macro.Macro;
 import net.zyski.zmacro.client.Macro.ZMacro;
 import net.zyski.zmacro.client.chat.GameChatEvent;
@@ -74,8 +83,52 @@ public class ZmacroClient implements ClientModInitializer {
         registerTickThread();
         registerKeyBindThread();
         registerChatListenerThread();
+        registerEntityLoadThread();
+        registerScreenEventsThread();
         instance = this;
     }
+
+    private void registerScreenEventsThread() {
+        ScreenEvents.BEFORE_INIT.register(new ScreenEvents.BeforeInit() {
+            @Override
+            public void beforeInit(Minecraft minecraft, Screen screen, int width, int height) {
+                if(selected != null && selected.isActive()){
+                    selected.onScreenPreInit(minecraft, screen, width, height);
+                }
+            }
+        });
+
+        ScreenEvents.AFTER_INIT.register(new ScreenEvents.AfterInit() {
+            @Override
+            public void afterInit(Minecraft minecraft, Screen screen, int width, int height) {
+                if(selected != null && selected.isActive()){
+                    selected.onScreenPostInit(minecraft, screen, width, height);
+                }
+            }
+        });
+    }
+
+    private void registerEntityLoadThread() {
+        ClientEntityEvents.ENTITY_LOAD.register(new ClientEntityEvents.Load() {
+            @Override
+            public void onLoad(Entity entity, ClientLevel clientLevel) {
+                if(selected != null && selected.isActive()){
+                    selected.onEntityLoad(entity,clientLevel);
+                }
+            }
+        });
+
+        ClientEntityEvents.ENTITY_UNLOAD.register(new ClientEntityEvents.Unload() {
+            @Override
+            public void onUnload(Entity entity, ClientLevel clientLevel) {
+                if(selected != null && selected.isActive()){
+                    selected.onEntityUnload(entity,clientLevel);
+                }
+            }
+        });
+    }
+
+
 
 
     private void registerChatListenerThread() {
@@ -116,6 +169,16 @@ public class ZmacroClient implements ClientModInitializer {
     }
 
     private void registerGraphicsThread() {
+
+        WorldRenderEvents.LAST.register(new WorldRenderEvents.Last() {
+            @Override
+            public void onLast(WorldRenderContext context) {
+                if(selected != null && selected.isActive()){
+                    selected.onWorldRender(context);
+                }
+            }
+        });
+
         HudLayerRegistrationCallback.EVENT.register(drawer ->
                 drawer.addLayer(new IdentifiedLayer() {
                                     @Override
@@ -126,7 +189,7 @@ public class ZmacroClient implements ClientModInitializer {
                                     @Override
                                     public void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
                                         if (selected != null && selected.isActive()) {
-                                            selected.onRender(guiGraphics);
+                                            selected.onHUDRender(guiGraphics);
 
                                             if (Minecraft.getInstance().screen == null) {
                                                 Minecraft client = Minecraft.getInstance();

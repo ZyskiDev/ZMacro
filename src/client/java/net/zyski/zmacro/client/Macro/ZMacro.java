@@ -1,10 +1,14 @@
 package net.zyski.zmacro.client.Macro;
 
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.chat.ChatLog;
 import net.minecraft.client.multiplayer.chat.LoggedChatMessage;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
 import net.zyski.zmacro.client.ZmacroClient;
 import net.zyski.zmacro.client.chat.ChatEvent;
 
@@ -22,11 +26,31 @@ public interface ZMacro {
 
     boolean isActive();
 
-    default void onRender(GuiGraphics graphics) {
+    default void onHUDRender(GuiGraphics graphics) {
+
+    }
+
+    default void onWorldRender(WorldRenderContext context) {
+
+    }
+
+    default void onScreenPreInit(Minecraft minecraft, Screen screen, int width, int height) {
+
+    }
+
+    default void onScreenPostInit(Minecraft minecraft, Screen screen, int width, int height) {
 
     }
 
     default void onKeyPress(int keyCode, int modifiers, int scanCode) {
+
+    }
+
+    default void onEntityLoad(Entity enttiy, ClientLevel clientLevel) {
+
+    }
+
+    default void onEntityUnload(Entity enttiy, ClientLevel clientLevel) {
 
     }
 
