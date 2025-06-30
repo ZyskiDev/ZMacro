@@ -1,28 +1,25 @@
 package net.zyski.zmacro.client.util;
 
-import net.zyski.zmacro.client.Macro.ZMacro;
+
+import java.nio.file.Path;
 
 public class MacroWrapper {
 
-    private final ZMacro macro;
     private final String version;
     private final String name;
     private final String author;
     private final String description;
     private final String icon;
+    private  Path path;
 
-    public MacroWrapper(ZMacro macro, String name, String version,
+    public MacroWrapper(Path path, String name, String version,
                         String author, String description, String icon) {
-        this.macro = macro;
+        this.path = path;
         this.version = version;
         this.name = name;
         this.author = author;
         this.description = description;
         this.icon = icon;
-    }
-
-    public ZMacro getMacro() {
-        return macro;
     }
 
     public String getVersion() {
@@ -45,4 +42,7 @@ public class MacroWrapper {
         return icon;
     }
 
+    public Path getPath() {
+        return path;
+    }
 }

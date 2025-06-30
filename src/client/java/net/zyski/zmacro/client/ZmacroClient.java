@@ -14,8 +14,6 @@ import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerBlockEntityEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -39,15 +37,12 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.Executors;
+import java.nio.file.Path;
+import java.util.LinkedList;
+
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
-import static com.mojang.text2speech.Narrator.LOGGER;
 import static org.lwjgl.opengl.GL11C.GL_BLEND;
 import static org.lwjgl.opengl.GL11C.glEnable;
 
@@ -60,10 +55,8 @@ public class ZmacroClient implements ClientModInitializer {
             new KeyMapping("net.ZMacro.open_gui", InputConstants.Type.KEYSYM, InputConstants.KEY_EQUALS, "ZMacro")
     );
     ZMacro selected = null;
+    MemoryMappedClassLoader selectedLoader = null;
     File directory;
-    private List<MacroWrapper> loadedMacros = new ArrayList<>();
-    private List<MemoryMappedClassLoader> activeClassLoaders = new ArrayList<>();
-
     public static ZmacroClient getInstance() {
         return instance;
     }
@@ -73,11 +66,6 @@ public class ZmacroClient implements ClientModInitializer {
     public void onInitializeClient() {
         directory = Minecraft.getInstance().gameDirectory.toPath().resolve("ZMacro").toFile();
         directory.mkdir();
-        try {
-            loadMacrosFromFolder(directory);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
         registerCommands();
         registerGraphicsThread();
         registerTickThread();
@@ -128,9 +116,6 @@ public class ZmacroClient implements ClientModInitializer {
         });
     }
 
-
-
-
     private void registerChatListenerThread() {
         ClientReceiveMessageEvents.ALLOW_GAME.register((message, overlay) -> {
             GameChatEvent event = new GameChatEvent(message, overlay);
@@ -153,7 +138,11 @@ public class ZmacroClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (OPEN_GUI.consumeClick()) {
                 if (selected == null || !selected.isActive()) {
-                    client.setScreen(new MacroSelectionScreen(loadedMacros, client.screen));
+                    try {
+                        client.setScreen(new MacroSelectionScreen(getMacroIndexes(directory), client.screen));
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 } else if (selected != null && selected.isActive()) {
                     selected.toggle();
                 }
@@ -247,15 +236,6 @@ public class ZmacroClient implements ClientModInitializer {
                                     }))
             );
 
-            dispatcher.register(ClientCommandManager.literal("reloadmacros").executes(context -> {
-                if (selected != null && selected.isActive()) {
-                    message("Please stop macro before executing reload..");
-                    return 1;
-                }
-                loadMacrosAsync(directory);
-                return 1;
-            }));
-
             dispatcher.register(ClientCommandManager.literal("stopmacro").executes(context -> {
                 if (selected != null && selected.isActive()) {
                     message("Stopping Macro...");
@@ -269,96 +249,52 @@ public class ZmacroClient implements ClientModInitializer {
         }));
     }
 
-    public void loadMacrosAsync(File directory) {
-        Minecraft.getInstance().execute(() -> {
-            if (Minecraft.getInstance().player != null) {
-                message("Attempting to reload macros...");
-            }
-        });
-        CompletableFuture.supplyAsync(() -> {
-                    try {
-                        loadMacrosFromFolder(directory);
-                        return loadedMacros.size();
-                    } catch (IOException e) {
-                        throw new CompletionException(e);
-                    }
-                }, Executors.newCachedThreadPool())
-                .whenCompleteAsync((count, throwable) -> {
-                    if (throwable != null) {
-                        message("Failed to load macros: " + throwable.getCause().getMessage());
-                        LOGGER.error("Macro loading failed", throwable);
-                    } else {
-                        message("Macros loaded successfully! (" + count + ")");
-                    }
-                }, Minecraft.getInstance());
-    }
+    public LinkedList<MacroWrapper> getMacroIndexes(File directory) throws IOException {
+        LinkedList<MacroWrapper> wrappers = new LinkedList<>();
+        File[] jarFiles = directory.listFiles((dir, name) -> name.endsWith(".jar"));
 
-    public void loadMacrosFromFolder(File macrosFolder) throws IOException {
-        releaseAllMacros();
+        if (jarFiles != null) {
+            for (File jarFile : jarFiles) {
+                byte[] jarBytes = Files.readAllBytes(jarFile.toPath());
 
-        File[] jarFiles = macrosFolder.listFiles((dir, name) -> name.endsWith(".jar"));
-        if (jarFiles == null) return;
+                try (MemoryMappedClassLoader classLoader = new MemoryMappedClassLoader(
+                        jarBytes,
+                        jarFile.getName(),
+                        getClass().getClassLoader()
+                )) {
+                    try (JarInputStream jarStream = new JarInputStream(new ByteArrayInputStream(jarBytes))) {
+                        JarEntry entry;
+                        while ((entry = jarStream.getNextJarEntry()) != null) {
+                            if (!entry.isDirectory() && entry.getName().endsWith(".class")) {
+                                String className = entry.getName()
+                                        .replace(".class", "")
+                                        .replace("/", ".");
 
-        for (File jarFile : jarFiles) {
-            byte[] jarBytes = Files.readAllBytes(jarFile.toPath());
-
-            try (MemoryMappedClassLoader classLoader = new MemoryMappedClassLoader(
-                    jarBytes,
-                    jarFile.getName(),
-                    getClass().getClassLoader()
-            )) {
-                activeClassLoaders.add(classLoader);
-
-                try (JarInputStream jarStream = new JarInputStream(new ByteArrayInputStream(jarBytes))) {
-                    JarEntry entry;
-                    while ((entry = jarStream.getNextJarEntry()) != null) {
-                        if (!entry.isDirectory() && entry.getName().endsWith(".class")) {
-                            processJarEntry(classLoader, entry);
+                                try {
+                                    Class<?> cls = classLoader.loadClass(className);
+                                    if (cls.isAnnotationPresent(Macro.class) && ZMacro.class.isAssignableFrom(cls)) {
+                                        Macro meta = cls.getAnnotation(Macro.class);
+                                        wrappers.add(new MacroWrapper(
+                                                jarFile.toPath(),
+                                                meta.name(),
+                                                meta.version(),
+                                                meta.author(),
+                                                meta.description(),
+                                                meta.icon()
+                                        ));
+                                    }
+                                } catch (Exception e) {
+                                    System.err.println("Failed to process " + className + ": " + e.getMessage());
+                                }
+                            }
                         }
                     }
-                }
-            }
-        }
-    }
-
-    private void processJarEntry(ClassLoader loader, JarEntry entry) {
-        String className = entry.getName()
-                .replace(".class", "")
-                .replace("/", ".");
-
-        try {
-            Class<?> cls = loader.loadClass(className);
-            if (cls.isAnnotationPresent(Macro.class) && ZMacro.class.isAssignableFrom(cls)) {
-                ZMacro macro = (ZMacro) cls.getDeclaredConstructor().newInstance();
-                Macro meta = cls.getAnnotation(Macro.class);
-                loadedMacros.add(new MacroWrapper(
-                        macro,
-                        meta.name(),
-                        meta.version(),
-                        meta.author(),
-                        meta.description(),
-                        meta.icon()
-                ));
-
-            }
-        } catch (Exception e) {
-            message("Failed to process " + className);
-        }
-    }
-
-    public void releaseAllMacros() {
-        for (ClassLoader loader : activeClassLoaders) {
-            if (loader instanceof AutoCloseable) {
-                try {
-                    ((AutoCloseable) loader).close();
                 } catch (Exception e) {
-                    LOGGER.error("Failed to close classloader", e);
+                    System.err.println("Failed to process JAR: " + jarFile.getName() + ": " + e.getMessage());
                 }
             }
         }
-
-        loadedMacros.clear();
-        activeClassLoaders.clear();
+        return wrappers;
     }
 
     private void message(String message) {
@@ -374,8 +310,41 @@ public class ZmacroClient implements ClientModInitializer {
         return selected;
     }
 
-    public void setSelected(ZMacro selected) {
-        this.selected = selected;
-        selected.toggle();
+
+    public void setSelected(Path path) {
+        if(selectedLoader != null)
+             selectedLoader.close();
+
+        try {
+        byte[] jarBytes = Files.readAllBytes(path);
+        MemoryMappedClassLoader classLoader = new MemoryMappedClassLoader(
+                jarBytes,
+                path.getFileName().toString(),
+                getClass().getClassLoader());
+             JarInputStream jarStream = new JarInputStream(new ByteArrayInputStream(jarBytes));
+
+            JarEntry entry;
+            while ((entry = jarStream.getNextJarEntry()) != null) {
+                if (!entry.isDirectory() && entry.getName().endsWith(".class")) {
+                    String className = entry.getName()
+                            .replace(".class", "")
+                            .replace("/", ".");
+
+                    try {
+                        Class<?> cls = classLoader.loadClass(className);
+                        if (ZMacro.class.isAssignableFrom(cls)) {
+                            selected = (ZMacro) cls.getDeclaredConstructor().newInstance();
+                            selectedLoader = classLoader;
+                        }
+                    } catch (Exception e) {
+                        continue;
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        if(selected != null)
+          selected.toggle();
     }
 }

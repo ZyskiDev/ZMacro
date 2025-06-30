@@ -16,18 +16,18 @@ import net.zyski.zmacro.client.ZmacroClient;
 import net.zyski.zmacro.client.util.MacroWrapper;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.LinkedList;
 import java.util.List;
 
 public class MacroSelectionScreen extends Screen {
     private static final ResourceLocation DEFAULT_ICON = ResourceLocation.withDefaultNamespace("textures/item/paper.png");
     private final Screen parent;
-    private final List<MacroWrapper> macros;
     private MacroListWidget macroList;
-
-    public MacroSelectionScreen(List<MacroWrapper> macros, Screen parent) {
+    private LinkedList<MacroWrapper> wrappers;
+    public MacroSelectionScreen(LinkedList<MacroWrapper> macros, Screen parent) {
         super(Component.literal("Macro Selector"));
-        this.macros = macros;
         this.parent = parent;
+        this.wrappers = macros;
     }
 
     @Override
@@ -38,8 +38,7 @@ public class MacroSelectionScreen extends Screen {
                 this.height,
                 this
         );
-
-        macros.forEach((wrapper) ->
+        wrappers.forEach((wrapper) ->
                 macroList.addMacroEntry(wrapper)
         );
 
@@ -75,7 +74,7 @@ public class MacroSelectionScreen extends Screen {
         private final MacroSelectionScreen parentScreen;
 
         public MacroListWidget(Minecraft client, int width, int height, MacroSelectionScreen parentScreen) {
-            super(client, width, height, 33, 36, (int) (9.0F * 1.5F));// Fixed row height
+            super(client, width, height, 33, 36, (int) (9.0F * 1.5F));
             this.parentScreen = parentScreen;
         }
 
@@ -149,7 +148,7 @@ public class MacroSelectionScreen extends Screen {
             @Override
             public boolean mouseClicked(double mouseX, double mouseY, int button) {
                 if (button == 0) {
-                    ZmacroClient.getInstance().setSelected(this.macro.getMacro());
+                    ZmacroClient.getInstance().setSelected(this.macro.getPath());
                     Minecraft.getInstance().setScreen(null);
                     return true;
                 }
