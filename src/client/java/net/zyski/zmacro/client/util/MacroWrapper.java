@@ -10,7 +10,7 @@ public class MacroWrapper {
     private final String author;
     private final String description;
     private final String icon;
-    private  Path path;
+    private final Path path;
 
     public MacroWrapper(Path path, String name, String version,
                         String author, String description, String icon) {

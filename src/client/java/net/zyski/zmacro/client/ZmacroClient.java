@@ -32,15 +32,18 @@ import net.zyski.zmacro.client.screen.MacroSelectionScreen;
 import net.zyski.zmacro.client.util.MacroWrapper;
 import net.zyski.zmacro.client.util.MemoryMappedClassLoader;
 import net.zyski.zmacro.client.util.Resources;
+import net.zyski.zmacro.client.util.SleepUtil;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
-
+import java.util.Properties;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 
 import static org.lwjgl.opengl.GL11C.GL_BLEND;
@@ -57,6 +60,7 @@ public class ZmacroClient implements ClientModInitializer {
     ZMacro selected = null;
     MemoryMappedClassLoader selectedLoader = null;
     File directory;
+
     public static ZmacroClient getInstance() {
         return instance;
     }
@@ -80,7 +84,7 @@ public class ZmacroClient implements ClientModInitializer {
         ScreenEvents.BEFORE_INIT.register(new ScreenEvents.BeforeInit() {
             @Override
             public void beforeInit(Minecraft minecraft, Screen screen, int width, int height) {
-                if(selected != null && selected.isActive()){
+                if (selected != null && selected.isActive()) {
                     selected.onScreenPreInit(minecraft, screen, width, height);
                 }
             }
@@ -89,7 +93,7 @@ public class ZmacroClient implements ClientModInitializer {
         ScreenEvents.AFTER_INIT.register(new ScreenEvents.AfterInit() {
             @Override
             public void afterInit(Minecraft minecraft, Screen screen, int width, int height) {
-                if(selected != null && selected.isActive()){
+                if (selected != null && selected.isActive()) {
                     selected.onScreenPostInit(minecraft, screen, width, height);
                 }
             }
@@ -100,8 +104,8 @@ public class ZmacroClient implements ClientModInitializer {
         ClientEntityEvents.ENTITY_LOAD.register(new ClientEntityEvents.Load() {
             @Override
             public void onLoad(Entity entity, ClientLevel clientLevel) {
-                if(selected != null && selected.isActive()){
-                    selected.onEntityLoad(entity,clientLevel);
+                if (selected != null && selected.isActive()) {
+                    selected.onEntityLoad(entity, clientLevel);
                 }
             }
         });
@@ -109,8 +113,8 @@ public class ZmacroClient implements ClientModInitializer {
         ClientEntityEvents.ENTITY_UNLOAD.register(new ClientEntityEvents.Unload() {
             @Override
             public void onUnload(Entity entity, ClientLevel clientLevel) {
-                if(selected != null && selected.isActive()){
-                    selected.onEntityUnload(entity,clientLevel);
+                if (selected != null && selected.isActive()) {
+                    selected.onEntityUnload(entity, clientLevel);
                 }
             }
         });
@@ -152,8 +156,16 @@ public class ZmacroClient implements ClientModInitializer {
 
     private void registerTickThread() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (selected != null && selected.isActive())
-                selected.loop();
+            if (selected != null && selected.isActive()) {
+                if (SleepUtil.isSleeping() && SleepUtil.getBreakSleepCondition() != null && SleepUtil.getSleepTimeout() > 0) {
+                    if ((SleepUtil.getBreakSleepCondition().getAsBoolean()) || (System.currentTimeMillis() > SleepUtil.getSleepTimeout())) {
+                        selected.stopSleep();
+                    }
+                } else {
+                    selected.loop();
+                }
+
+            }
         });
     }
 
@@ -162,7 +174,7 @@ public class ZmacroClient implements ClientModInitializer {
         WorldRenderEvents.LAST.register(new WorldRenderEvents.Last() {
             @Override
             public void onLast(WorldRenderContext context) {
-                if(selected != null && selected.isActive()){
+                if (selected != null && selected.isActive()) {
                     selected.onWorldRender(context);
                 }
             }
@@ -230,7 +242,7 @@ public class ZmacroClient implements ClientModInitializer {
                             .then(ClientCommandManager.argument("args", StringArgumentType.greedyString())
                                     .executes(ctx -> {
                                         String allArgs = StringArgumentType.getString(ctx, "args");
-                                        if(selected != null && selected.isActive())
+                                        if (selected != null && selected.isActive())
                                             selected.onCommand(allArgs);
                                         return 1;
                                     }))
@@ -252,46 +264,64 @@ public class ZmacroClient implements ClientModInitializer {
     public LinkedList<MacroWrapper> getMacroIndexes(File directory) throws IOException {
         LinkedList<MacroWrapper> wrappers = new LinkedList<>();
         File[] jarFiles = directory.listFiles((dir, name) -> name.endsWith(".jar"));
+        if (jarFiles == null) return wrappers;
+        for (File jarFile : jarFiles) {
+            try (JarFile jar = new JarFile(jarFile)) {
+                JarEntry metadata = jar.getJarEntry("META-INF/macro");
 
-        if (jarFiles != null) {
-            for (File jarFile : jarFiles) {
-                byte[] jarBytes = Files.readAllBytes(jarFile.toPath());
+                if (metadata != null) {
+                    Properties props = new Properties();
+                    try (InputStream is = jar.getInputStream(metadata)) {
+                        props.load(is);
+                        wrappers.add(new MacroWrapper(
+                                jarFile.toPath(),
+                                props.getProperty("name"),
+                                props.getProperty("version"),
+                                props.getProperty("author"),
+                                props.getProperty("description"),
+                                props.getProperty("icon")
+                        ));
+                        continue;
+                    }
+                }
+            } catch (Exception e) {
 
-                try (MemoryMappedClassLoader classLoader = new MemoryMappedClassLoader(
-                        jarBytes,
-                        jarFile.getName(),
-                        getClass().getClassLoader()
-                )) {
-                    try (JarInputStream jarStream = new JarInputStream(new ByteArrayInputStream(jarBytes))) {
-                        JarEntry entry;
-                        while ((entry = jarStream.getNextJarEntry()) != null) {
-                            if (!entry.isDirectory() && entry.getName().endsWith(".class")) {
-                                String className = entry.getName()
-                                        .replace(".class", "")
-                                        .replace("/", ".");
+            }
+            byte[] jarBytes = Files.readAllBytes(jarFile.toPath());
+            try (MemoryMappedClassLoader classLoader = new MemoryMappedClassLoader(
+                    jarBytes,
+                    jarFile.getName(),
+                    getClass().getClassLoader()
+            )) {
+                try (JarInputStream jarStream = new JarInputStream(new ByteArrayInputStream(jarBytes))) {
+                    JarEntry entry;
+                    while ((entry = jarStream.getNextJarEntry()) != null) {
+                        if (!entry.isDirectory() && entry.getName().endsWith(".class")) {
+                            String className = entry.getName()
+                                    .replace(".class", "")
+                                    .replace("/", ".");
 
-                                try {
-                                    Class<?> cls = classLoader.loadClass(className);
-                                    if (cls.isAnnotationPresent(Macro.class) && ZMacro.class.isAssignableFrom(cls)) {
-                                        Macro meta = cls.getAnnotation(Macro.class);
-                                        wrappers.add(new MacroWrapper(
-                                                jarFile.toPath(),
-                                                meta.name(),
-                                                meta.version(),
-                                                meta.author(),
-                                                meta.description(),
-                                                meta.icon()
-                                        ));
-                                    }
-                                } catch (Exception e) {
-                                    System.err.println("Failed to process " + className + ": " + e.getMessage());
+                            try {
+                                Class<?> cls = classLoader.loadClass(className);
+                                if (cls.isAnnotationPresent(Macro.class) && ZMacro.class.isAssignableFrom(cls)) {
+                                    Macro meta = cls.getAnnotation(Macro.class);
+                                    wrappers.add(new MacroWrapper(
+                                            jarFile.toPath(),
+                                            meta.name(),
+                                            meta.version(),
+                                            meta.author(),
+                                            meta.description(),
+                                            meta.icon()
+                                    ));
                                 }
+                            } catch (Exception e) {
+                                System.err.println("Failed to process " + className + ": " + e.getMessage());
                             }
                         }
                     }
-                } catch (Exception e) {
-                    System.err.println("Failed to process JAR: " + jarFile.getName() + ": " + e.getMessage());
                 }
+            } catch (Exception e) {
+                System.err.println("Failed to process JAR: " + jarFile.getName() + ": " + e.getMessage());
             }
         }
         return wrappers;
@@ -312,16 +342,16 @@ public class ZmacroClient implements ClientModInitializer {
 
 
     public void setSelected(Path path) {
-        if(selectedLoader != null)
-             selectedLoader.close();
+        if (selectedLoader != null)
+            selectedLoader.close();
 
         try {
-        byte[] jarBytes = Files.readAllBytes(path);
-        MemoryMappedClassLoader classLoader = new MemoryMappedClassLoader(
-                jarBytes,
-                path.getFileName().toString(),
-                getClass().getClassLoader());
-             JarInputStream jarStream = new JarInputStream(new ByteArrayInputStream(jarBytes));
+            byte[] jarBytes = Files.readAllBytes(path);
+            MemoryMappedClassLoader classLoader = new MemoryMappedClassLoader(
+                    jarBytes,
+                    path.getFileName().toString(),
+                    getClass().getClassLoader());
+            JarInputStream jarStream = new JarInputStream(new ByteArrayInputStream(jarBytes));
 
             JarEntry entry;
             while ((entry = jarStream.getNextJarEntry()) != null) {
@@ -344,7 +374,7 @@ public class ZmacroClient implements ClientModInitializer {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        if(selected != null)
-          selected.toggle();
+        if (selected != null)
+            selected.toggle();
     }
 }

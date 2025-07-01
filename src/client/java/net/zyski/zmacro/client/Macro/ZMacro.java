@@ -11,8 +11,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.zyski.zmacro.client.ZmacroClient;
 import net.zyski.zmacro.client.chat.ChatEvent;
+import net.zyski.zmacro.client.util.SleepUtil;
 
 import java.time.Instant;
+import java.util.function.BooleanSupplier;
 
 public interface ZMacro {
 
@@ -25,6 +27,22 @@ public interface ZMacro {
     void toggle();
 
     boolean isActive();
+
+    default void sleep(long timeout) {
+        sleep(() -> false, timeout);
+    }
+
+    default void sleep(BooleanSupplier condition, long interval) {
+        SleepUtil.setSleepTimeout(System.currentTimeMillis() + interval);
+        SleepUtil.setBreakSleepCondition(condition);
+        SleepUtil.setSleeping(true);
+    }
+
+    default void stopSleep() {
+        SleepUtil.setSleeping(false);
+        SleepUtil.setSleepTimeout(0);
+        SleepUtil.setBreakSleepCondition(null);
+    }
 
     default void onHUDRender(GuiGraphics graphics) {
 
@@ -58,7 +76,7 @@ public interface ZMacro {
 
     }
 
-    default void onCommand(String command){
+    default void onCommand(String command) {
 
     }
 

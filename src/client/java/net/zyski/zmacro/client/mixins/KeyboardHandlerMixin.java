@@ -19,13 +19,13 @@ public abstract class KeyboardHandlerMixin {
     )
     private void onKeyPress(long window, int key, int scancode, int action, int modifiers, CallbackInfo ci) {
         if (action == GLFW.GLFW_PRESS) {
-                Minecraft client = Minecraft.getInstance();
-                if (client.player != null) {
-                    if (ZmacroClient.getInstance().getSelected() != null && ZmacroClient.getInstance().getSelected().isActive()) {
-                        ZmacroClient.getInstance().getSelected().onKeyPress(key, modifiers, scancode);
-                    }
+            Minecraft client = Minecraft.getInstance();
+            if (client.player != null) {
+                if (ZmacroClient.getInstance().getSelected() != null && ZmacroClient.getInstance().getSelected().isActive()) {
+                    ZmacroClient.getInstance().getSelected().onKeyPress(key, modifiers, scancode);
                 }
             }
+        }
     }
 
 }

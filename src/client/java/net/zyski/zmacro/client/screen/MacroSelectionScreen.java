@@ -23,7 +23,8 @@ public class MacroSelectionScreen extends Screen {
     private static final ResourceLocation DEFAULT_ICON = ResourceLocation.withDefaultNamespace("textures/item/paper.png");
     private final Screen parent;
     private MacroListWidget macroList;
-    private LinkedList<MacroWrapper> wrappers;
+    private final LinkedList<MacroWrapper> wrappers;
+
     public MacroSelectionScreen(LinkedList<MacroWrapper> macros, Screen parent) {
         super(Component.literal("Macro Selector"));
         this.parent = parent;
