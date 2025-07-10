@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
@@ -24,6 +25,9 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.zyski.zmacro.client.Macro.Macro;
 import net.zyski.zmacro.client.Macro.ZMacro;
 import net.zyski.zmacro.client.chat.GameChatEvent;
@@ -41,6 +45,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -55,7 +60,7 @@ public class ZmacroClient implements ClientModInitializer {
     private static ZmacroClient instance;
     public boolean blockMouseGrabbing = false;
     public KeyMapping OPEN_GUI = KeyBindingHelper.registerKeyBinding(
-            new KeyMapping("net.ZMacro.open_gui", InputConstants.Type.KEYSYM, InputConstants.KEY_EQUALS, "ZMacro")
+            new KeyMapping("Open GUI", InputConstants.Type.KEYSYM, InputConstants.KEY_EQUALS, "ZMacro")
     );
     ZMacro selected = null;
     MemoryMappedClassLoader selectedLoader = null;
@@ -79,6 +84,19 @@ public class ZmacroClient implements ClientModInitializer {
         registerScreenEventsThread();
         instance = this;
     }
+
+
+    private void registerToolTipThread(){
+        ItemTooltipCallback.EVENT.register(new ItemTooltipCallback() {
+            @Override
+            public void getTooltip(ItemStack itemStack, Item.TooltipContext tooltipContext, TooltipFlag tooltipFlag, List<Component> list) {
+                if (selected != null && selected.isActive()) {
+                    selected.onToolTipCallBack(itemStack, tooltipContext, tooltipFlag, list);
+                }
+            }
+        });
+    }
+
 
     private void registerScreenEventsThread() {
         ScreenEvents.BEFORE_INIT.register(new ScreenEvents.BeforeInit() {

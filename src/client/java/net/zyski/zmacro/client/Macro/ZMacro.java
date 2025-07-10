@@ -10,11 +10,15 @@ import net.minecraft.client.multiplayer.chat.LoggedChatMessage;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.zyski.zmacro.client.ZmacroClient;
 import net.zyski.zmacro.client.chat.ChatEvent;
 import net.zyski.zmacro.client.util.SleepUtil;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.function.BooleanSupplier;
 
 public interface ZMacro {
@@ -46,6 +50,10 @@ public interface ZMacro {
     }
 
     default void onHUDRender(GuiGraphics graphics) {
+
+    }
+
+    default void onScreenRender(Screen screen, GuiGraphics gui, int mouseX, int mouseY, float delta){
 
     }
 
@@ -84,6 +92,12 @@ public interface ZMacro {
     default void onPacket(Packet<?> packet){
 
     }
+
+    default void onToolTipCallBack(ItemStack itemStack, Item.TooltipContext tooltipContext, TooltipFlag tooltipFlag, List<Component> list){
+
+    }
+
+
 
     default void message(String text) {
         Minecraft.getInstance().gui.getChat().addMessage(Component.literal(text));

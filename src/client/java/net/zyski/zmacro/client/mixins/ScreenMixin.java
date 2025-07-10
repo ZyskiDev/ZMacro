@@ -23,6 +23,8 @@ public abstract class ScreenMixin {
     @Inject(method = "render", at = @At("TAIL"))
     private void onRender(GuiGraphics gui, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         if (ZmacroClient.getInstance().getSelected() != null && ZmacroClient.getInstance().getSelected().isActive()) {
+            ZmacroClient.getInstance().getSelected().onScreenRender((Screen)(Object) this, gui, mouseX, mouseY, delta);
+
             Minecraft client = Minecraft.getInstance();
             glEnable(GL_BLEND);
             int spriteSize = 32;
@@ -64,8 +66,5 @@ public abstract class ScreenMixin {
                 cir.setReturnValue(true);
             }
         }
-//        if(ZmacroClient.getInstance().getSelected() != null && ZmacroClient.getInstance().getSelected().isActive()) {
-//            ZmacroClient.getInstance().getSelected().onKeyPress(i, j, k);
-//        }
     }
 }
