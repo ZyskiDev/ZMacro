@@ -14,8 +14,7 @@ public abstract class KeyboardHandlerMixin {
 
     @Inject(
             method = "keyPress(JIIII)V",
-            at = @At("HEAD"),
-            cancellable = true
+            at = @At("HEAD")
     )
     private void onKeyPress(long window, int key, int scancode, int action, int modifiers, CallbackInfo ci) {
         if (action == GLFW.GLFW_PRESS) {

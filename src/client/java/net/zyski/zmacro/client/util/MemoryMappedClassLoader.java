@@ -14,7 +14,7 @@ public class MemoryMappedClassLoader extends ClassLoader implements AutoCloseabl
     private final Map<String, byte[]> classBytes = new HashMap<>();
     private boolean closed = false;
 
-    public MemoryMappedClassLoader(byte[] jarData, String jarName, ClassLoader parent) {
+    public MemoryMappedClassLoader(byte[] jarData, ClassLoader parent) {
         super(parent);
         this.jarData = jarData;
         preloadClasses();

@@ -10,21 +10,14 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
 import net.zyski.zmacro.client.Macro.Macro;
 import net.zyski.zmacro.client.Macro.ZMacro;
 import net.zyski.zmacro.client.chat.GameChatEvent;
@@ -42,7 +35,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -85,53 +77,38 @@ public class ZMacroClient implements ClientModInitializer {
 
 
     private void registerToolTipThread(){
-        ItemTooltipCallback.EVENT.register(new ItemTooltipCallback() {
-            @Override
-            public void getTooltip(ItemStack itemStack, Item.TooltipContext tooltipContext, TooltipFlag tooltipFlag, List<Component> list) {
-                if (selected != null && selected.isActive()) {
-                    selected.onToolTipCallBack(itemStack, tooltipContext, tooltipFlag, list);
-                }
+        ItemTooltipCallback.EVENT.register((itemStack, tooltipContext, tooltipFlag, list) -> {
+            if (selected != null && selected.isActive()) {
+                selected.onToolTipCallBack(itemStack, tooltipContext, tooltipFlag, list);
             }
         });
     }
 
 
     private void registerScreenEventsThread() {
-        ScreenEvents.BEFORE_INIT.register(new ScreenEvents.BeforeInit() {
-            @Override
-            public void beforeInit(Minecraft minecraft, Screen screen, int width, int height) {
-                if (selected != null && selected.isActive()) {
-                    selected.onScreenPreInit(minecraft, screen, width, height);
-                }
+        ScreenEvents.BEFORE_INIT.register((minecraft, screen, width, height) -> {
+            if (selected != null && selected.isActive()) {
+                selected.onScreenPreInit(minecraft, screen, width, height);
             }
         });
 
-        ScreenEvents.AFTER_INIT.register(new ScreenEvents.AfterInit() {
-            @Override
-            public void afterInit(Minecraft minecraft, Screen screen, int width, int height) {
-                if (selected != null && selected.isActive()) {
-                    selected.onScreenPostInit(minecraft, screen, width, height);
-                }
+        ScreenEvents.AFTER_INIT.register((minecraft, screen, width, height) -> {
+            if (selected != null && selected.isActive()) {
+                selected.onScreenPostInit(minecraft, screen, width, height);
             }
         });
     }
 
     private void registerEntityLoadThread() {
-        ClientEntityEvents.ENTITY_LOAD.register(new ClientEntityEvents.Load() {
-            @Override
-            public void onLoad(Entity entity, ClientLevel clientLevel) {
-                if (selected != null && selected.isActive()) {
-                    selected.onEntityLoad(entity, clientLevel);
-                }
+        ClientEntityEvents.ENTITY_LOAD.register((entity, clientLevel) -> {
+            if (selected != null && selected.isActive()) {
+                selected.onEntityLoad(entity, clientLevel);
             }
         });
 
-        ClientEntityEvents.ENTITY_UNLOAD.register(new ClientEntityEvents.Unload() {
-            @Override
-            public void onUnload(Entity entity, ClientLevel clientLevel) {
-                if (selected != null && selected.isActive()) {
-                    selected.onEntityUnload(entity, clientLevel);
-                }
+        ClientEntityEvents.ENTITY_UNLOAD.register((entity, clientLevel) -> {
+            if (selected != null && selected.isActive()) {
+                selected.onEntityUnload(entity, clientLevel);
             }
         });
     }
@@ -187,12 +164,9 @@ public class ZMacroClient implements ClientModInitializer {
 
     private void registerGraphicsThread() {
 
-        WorldRenderEvents.LAST.register(new WorldRenderEvents.Last() {
-            @Override
-            public void onLast(WorldRenderContext worldRenderContext) {
-                if (selected != null && selected.isActive()) {
-                    selected.onWorldRender(worldRenderContext);
-                }
+        WorldRenderEvents.LAST.register(worldRenderContext -> {
+            if (selected != null && selected.isActive()) {
+                selected.onWorldRender(worldRenderContext);
             }
         });
 
@@ -292,13 +266,12 @@ public class ZMacroClient implements ClientModInitializer {
                         continue;
                     }
                 }
-            } catch (Exception e) {
+            } catch (Exception ignored) {
 
             }
             byte[] jarBytes = Files.readAllBytes(jarFile.toPath());
             try (MemoryMappedClassLoader classLoader = new MemoryMappedClassLoader(
                     jarBytes,
-                    jarFile.getName(),
                     getClass().getClassLoader()
             )) {
                 try (JarInputStream jarStream = new JarInputStream(new ByteArrayInputStream(jarBytes))) {
@@ -357,7 +330,6 @@ public class ZMacroClient implements ClientModInitializer {
             byte[] jarBytes = Files.readAllBytes(path);
             MemoryMappedClassLoader classLoader = new MemoryMappedClassLoader(
                     jarBytes,
-                    path.getFileName().toString(),
                     getClass().getClassLoader());
             JarInputStream jarStream = new JarInputStream(new ByteArrayInputStream(jarBytes));
 
@@ -374,8 +346,8 @@ public class ZMacroClient implements ClientModInitializer {
                             selected = (ZMacro) cls.getDeclaredConstructor().newInstance();
                             selectedLoader = classLoader;
                         }
-                    } catch (Exception e) {
-                        continue;
+                    } catch (Exception ignored) {
+
                     }
                 }
             }
