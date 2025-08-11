@@ -1,6 +1,10 @@
 package net.zyski.zmacro.client.Macro;
 
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+import net.minecraft.client.Camera;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -16,6 +20,8 @@ import net.minecraft.world.item.TooltipFlag;
 import net.zyski.zmacro.client.ZmacroClient;
 import net.zyski.zmacro.client.chat.ChatEvent;
 import net.zyski.zmacro.client.util.SleepUtil;
+import org.joml.Matrix4f;
+import org.joml.Vector4f;
 
 import java.time.Instant;
 import java.util.List;
@@ -89,15 +95,18 @@ public interface ZMacro {
 
     }
 
-    default void onPacket(Packet<?> packet){
+    default boolean onPacketReceived(Packet<?> packet){
+        return false;
+    }
 
+
+    default boolean onPacketSent(Packet<?> packet){
+        return false;
     }
 
     default void onToolTipCallBack(ItemStack itemStack, Item.TooltipContext tooltipContext, TooltipFlag tooltipFlag, List<Component> list){
 
     }
-
-
 
     default void message(String text) {
         Minecraft.getInstance().gui.getChat().addMessage(Component.literal(text));
@@ -110,4 +119,13 @@ public interface ZMacro {
     }
 
 
+    default void postLevelRender(GraphicsResourceAllocator allocator, DeltaTracker tickCounter, boolean blockOutline, Camera camera, Matrix4f positionMatrix, Matrix4f projectionMatrix, GpuBufferSlice fog, Vector4f fogColor, boolean shouldRenderSky) {
+
+
+    }
+
+    default void preLevelRender(GraphicsResourceAllocator allocator, DeltaTracker tickCounter, boolean blockOutline, Camera camera, Matrix4f positionMatrix, Matrix4f projectionMatrix, GpuBufferSlice fog, Vector4f fogColor, boolean shouldRenderSky) {
+
+
+    }
 }

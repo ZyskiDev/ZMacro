@@ -10,18 +10,15 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
-import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -82,6 +79,7 @@ public class ZmacroClient implements ClientModInitializer {
         registerChatListenerThread();
         registerEntityLoadThread();
         registerScreenEventsThread();
+        registerToolTipThread();
         instance = this;
     }
 
@@ -191,65 +189,57 @@ public class ZmacroClient implements ClientModInitializer {
 
         WorldRenderEvents.LAST.register(new WorldRenderEvents.Last() {
             @Override
-            public void onLast(WorldRenderContext context) {
+            public void onLast(WorldRenderContext worldRenderContext) {
                 if (selected != null && selected.isActive()) {
-                    selected.onWorldRender(context);
+                    selected.onWorldRender(worldRenderContext);
                 }
             }
         });
 
-        HudLayerRegistrationCallback.EVENT.register(drawer ->
-                drawer.addLayer(new IdentifiedLayer() {
-                                    @Override
-                                    public ResourceLocation id() {
-                                        return ResourceLocation.fromNamespaceAndPath("zmacro", "macro_layer");
-                                    }
 
-                                    @Override
-                                    public void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
-                                        if (selected != null && selected.isActive()) {
-                                            selected.onHUDRender(guiGraphics);
+        HudElementRegistry.addLast(ResourceLocation.fromNamespaceAndPath("zmacro", "macro_layer"), (guiGraphics, tickDelta) -> {
+            Minecraft client = Minecraft.getInstance();
 
-                                            if (Minecraft.getInstance().screen == null) {
-                                                Minecraft client = Minecraft.getInstance();
-                                                glEnable(GL_BLEND);
+            if (selected != null && selected.isActive()) {
+                selected.onHUDRender(guiGraphics);
 
+                if (client.screen == null) {
+                    glEnable(GL_BLEND);
 
-                                                int spriteSize = 32;
-                                                int x = (guiGraphics.guiWidth() / 2) - (spriteSize / 2);
-                                                int y = guiGraphics.guiHeight() - 90;
-                                                guiGraphics.blit(RenderType::guiTextured,
-                                                        Resources.STOP_BUTTON,
-                                                        x,
-                                                        y,
-                                                        0, 0, spriteSize, spriteSize, spriteSize, spriteSize
-                                                );
+                    int spriteSize = 32;
+                    int x = (guiGraphics.guiWidth() / 2) - (spriteSize / 2);
+                    int y = guiGraphics.guiHeight() - 90;
 
-                                                String keyText = "[" + OPEN_GUI.getTranslatedKeyMessage().getString() + "]";
-                                                guiGraphics.drawString(
-                                                        client.font,
-                                                        keyText,
-                                                        x + (spriteSize / 2) - (client.font.width(keyText) / 2),
-                                                        y + (spriteSize / 2) - 4,
-                                                        0xFFFFFF,
-                                                        true
-                                                );
+                    guiGraphics.blit(RenderPipelines.GUI_TEXTURED,
+                            Resources.STOP_BUTTON,
+                            x, y,
+                            0, 0,
+                            spriteSize, spriteSize,
+                            spriteSize, spriteSize
+                    );
 
-                                                String stopText = "STOP MACRO";
-                                                guiGraphics.drawString(
-                                                        client.font,
-                                                        stopText,
-                                                        x + (spriteSize / 2) - (client.font.width(stopText) / 2),
-                                                        y + 5 + (spriteSize) - 4,
-                                                        0xFFFFFF,
-                                                        true
-                                                );
+                    String keyText = "[" + OPEN_GUI.getTranslatedKeyMessage().getString() + "]";
+                    guiGraphics.drawString(
+                            client.font,
+                            keyText,
+                            x + (spriteSize / 2) - (client.font.width(keyText) / 2),
+                            y + (spriteSize / 2) - 4,
+                            0xFFFFFFFF,
+                            true
+                    );
 
-                                            }
-                                        }
-                                    }
-                                }
-                ));
+                    String stopText = "STOP MACRO";
+                    guiGraphics.drawString(
+                            client.font,
+                            stopText,
+                            x + (spriteSize / 2) - (client.font.width(stopText) / 2),
+                            y + 5 + spriteSize - 4,
+                            0xFFFFFFFF,
+                            true
+                    );
+                }
+            }
+        });
     }
 
     private void registerCommands() {
@@ -394,5 +384,9 @@ public class ZmacroClient implements ClientModInitializer {
         }
         if (selected != null)
             selected.toggle();
+    }
+
+    public File getDirectory() {
+        return directory;
     }
 }

@@ -5,7 +5,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
@@ -50,14 +50,13 @@ public class MacroSelectionScreen extends Screen {
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         this.macroList.render(guiGraphics, mouseX, mouseY, partialTick);
         guiGraphics.drawCenteredString(
                 this.font,
                 this.title,
                 this.width / 2,
                 12,
-                0xFFFFFF
+                0xFFFFFFFF
         );
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
@@ -123,7 +122,7 @@ public class MacroSelectionScreen extends Screen {
                 }
 
 
-                gui.blit(RenderType::guiTextured, (fetchedIcon != null ? fetchedIcon : DEFAULT_ICON), centerX + PADDING, top + PADDING, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+                gui.blit(RenderPipelines.GUI_TEXTURED, (fetchedIcon != null ? fetchedIcon : DEFAULT_ICON), centerX + PADDING, top + PADDING, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
 
 
                 int textLeft = centerX + ICON_SIZE + PADDING * 2;
@@ -132,16 +131,15 @@ public class MacroSelectionScreen extends Screen {
 
 
                 MutableComponent name = Component.literal(macro.getName() + "    " + macro.getVersion()).setStyle(Style.EMPTY.withBold(true));
-                gui.drawString(font, name, textLeft, top + PADDING, 0xFFFFFF, false);
-
+                gui.drawString(font, name, textLeft, top + PADDING, 0xFFFFFFFF, false);
 
                 List<FormattedCharSequence> descriptionLines = font.split(
-                        Component.literal(macro.getDescription()).withStyle(Style.EMPTY.withColor(0xAAAAAA)),
+                        Component.literal(macro.getDescription()).withStyle(Style.EMPTY.withColor(0xFFAAAAAA)),
                         textWidth
                 );
 
                 if (!descriptionLines.isEmpty()) {
-                    gui.drawString(font, descriptionLines.getFirst(), textLeft, top + PADDING + 12, 0xAAAAAA, false);
+                    gui.drawString(font, descriptionLines.getFirst(), textLeft, top + PADDING + 12, 0xFFAAAAAA, false);
                 }
             }
 

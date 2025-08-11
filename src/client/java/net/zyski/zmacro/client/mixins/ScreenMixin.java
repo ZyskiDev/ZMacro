@@ -3,7 +3,7 @@ package net.zyski.zmacro.client.mixins;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.zyski.zmacro.client.ZmacroClient;
 import net.zyski.zmacro.client.util.Resources;
 import org.spongepowered.asm.mixin.Mixin;
@@ -30,7 +30,7 @@ public abstract class ScreenMixin {
             int spriteSize = 32;
             int x = (gui.guiWidth() / 2) - (spriteSize / 2);
             int y = gui.guiHeight() - 90;
-            gui.blit(RenderType::guiTextured,
+            gui.blit(RenderPipelines.GUI_TEXTURED,
                     Resources.STOP_BUTTON,
                     x,
                     y,
@@ -43,7 +43,7 @@ public abstract class ScreenMixin {
                     keyText,
                     x + (spriteSize / 2) - (client.font.width(keyText) / 2),
                     y + (spriteSize / 2) - 4,
-                    0xFFFFFF,
+                    0xFFFFFFFF,
                     true
             );
             String stopText = "STOP MACRO";
@@ -52,7 +52,7 @@ public abstract class ScreenMixin {
                     stopText,
                     x + (spriteSize / 2) - (client.font.width(stopText) / 2),
                     y + 5 + (spriteSize) - 4,
-                    0xFFFFFF,
+                    0xFFFFFFFF,
                     true
             );
         }
