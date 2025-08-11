@@ -2,7 +2,7 @@ package net.zyski.zmacro.client.mixins;
 
 import net.minecraft.client.KeyboardHandler;
 import net.minecraft.client.Minecraft;
-import net.zyski.zmacro.client.ZmacroClient;
+import net.zyski.zmacro.client.ZMacroClient;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -21,8 +21,8 @@ public abstract class KeyboardHandlerMixin {
         if (action == GLFW.GLFW_PRESS) {
             Minecraft client = Minecraft.getInstance();
             if (client.player != null) {
-                if (ZmacroClient.getInstance().getSelected() != null && ZmacroClient.getInstance().getSelected().isActive()) {
-                    ZmacroClient.getInstance().getSelected().onKeyPress(key, modifiers, scancode);
+                if (ZMacroClient.getInstance().getSelected() != null && ZMacroClient.getInstance().getSelected().isActive()) {
+                    ZMacroClient.getInstance().getSelected().onKeyPress(key, modifiers, scancode);
                 }
             }
         }

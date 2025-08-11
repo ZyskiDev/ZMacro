@@ -52,9 +52,9 @@ import static org.lwjgl.opengl.GL11C.GL_BLEND;
 import static org.lwjgl.opengl.GL11C.glEnable;
 
 
-public class ZmacroClient implements ClientModInitializer {
+public class ZMacroClient implements ClientModInitializer {
 
-    private static ZmacroClient instance;
+    private static ZMacroClient instance;
     public boolean blockMouseGrabbing = false;
     public KeyMapping OPEN_GUI = KeyBindingHelper.registerKeyBinding(
             new KeyMapping("Open GUI", InputConstants.Type.KEYSYM, InputConstants.KEY_EQUALS, "ZMacro")
@@ -63,7 +63,7 @@ public class ZmacroClient implements ClientModInitializer {
     MemoryMappedClassLoader selectedLoader = null;
     File directory;
 
-    public static ZmacroClient getInstance() {
+    public static ZMacroClient getInstance() {
         return instance;
     }
 

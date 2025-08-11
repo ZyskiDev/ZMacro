@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.zyski.zmacro.client.ZmacroClient;
+import net.zyski.zmacro.client.ZMacroClient;
 import net.zyski.zmacro.client.util.Resources;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,8 +22,8 @@ public abstract class ScreenMixin {
 
     @Inject(method = "render", at = @At("TAIL"))
     private void onRender(GuiGraphics gui, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-        if (ZmacroClient.getInstance().getSelected() != null && ZmacroClient.getInstance().getSelected().isActive()) {
-            ZmacroClient.getInstance().getSelected().onScreenRender((Screen)(Object) this, gui, mouseX, mouseY, delta);
+        if (ZMacroClient.getInstance().getSelected() != null && ZMacroClient.getInstance().getSelected().isActive()) {
+            ZMacroClient.getInstance().getSelected().onScreenRender((Screen)(Object) this, gui, mouseX, mouseY, delta);
 
             Minecraft client = Minecraft.getInstance();
             glEnable(GL_BLEND);
@@ -37,7 +37,7 @@ public abstract class ScreenMixin {
                     0, 0, spriteSize, spriteSize, spriteSize, spriteSize
             );
 
-            String keyText = "[" + ZmacroClient.getInstance().OPEN_GUI.getTranslatedKeyMessage().getString() + "]";
+            String keyText = "[" + ZMacroClient.getInstance().OPEN_GUI.getTranslatedKeyMessage().getString() + "]";
             gui.drawString(
                     client.font,
                     keyText,
@@ -60,9 +60,9 @@ public abstract class ScreenMixin {
 
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
     private void onKeyPressed(int i, int j, int k, CallbackInfoReturnable<Boolean> cir) {
-        if (ZmacroClient.getInstance().OPEN_GUI.matches(i, j)) {
-            if (ZmacroClient.getInstance().isSelectedActive()) {
-                ZmacroClient.getInstance().getSelected().toggle();
+        if (ZMacroClient.getInstance().OPEN_GUI.matches(i, j)) {
+            if (ZMacroClient.getInstance().isSelectedActive()) {
+                ZMacroClient.getInstance().getSelected().toggle();
                 cir.setReturnValue(true);
             }
         }

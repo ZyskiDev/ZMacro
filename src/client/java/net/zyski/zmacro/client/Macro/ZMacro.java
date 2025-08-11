@@ -17,7 +17,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.zyski.zmacro.client.ZmacroClient;
+import net.zyski.zmacro.client.ZMacroClient;
 import net.zyski.zmacro.client.chat.ChatEvent;
 import net.zyski.zmacro.client.util.SleepUtil;
 import org.joml.Matrix4f;
@@ -115,7 +115,7 @@ public interface ZMacro {
     }
 
     default void setMouseGrab(boolean shouldGrab) {
-        ZmacroClient.getInstance().blockMouseGrabbing = !shouldGrab;
+        ZMacroClient.getInstance().blockMouseGrabbing = !shouldGrab;
     }
 
 

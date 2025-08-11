@@ -5,7 +5,7 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
-import net.zyski.zmacro.client.ZmacroClient;
+import net.zyski.zmacro.client.ZMacroClient;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -21,8 +21,8 @@ public class ConnectionMixin {
             at = @At("HEAD"),
             cancellable = true)
     private void onGetPacket(ChannelHandlerContext channelHandlerContext, Packet<?> packet, CallbackInfo ci){
-        if(ZmacroClient.getInstance().isSelectedActive()){
-            if(ZmacroClient.getInstance().getSelected().onPacketReceived(packet)){
+        if(ZMacroClient.getInstance().isSelectedActive()){
+            if(ZMacroClient.getInstance().getSelected().onPacketReceived(packet)){
                 ci.cancel();
             }
         }
@@ -33,8 +33,8 @@ public class ConnectionMixin {
             at = @At("HEAD"),
             cancellable = true)
     private void onSendPacket(Packet<?> packet, @Nullable ChannelFutureListener channelfuturelistener, boolean flag, CallbackInfo ci){
-        if(ZmacroClient.getInstance().isSelectedActive()){
-            if(ZmacroClient.getInstance().getSelected().onPacketSent(packet)){
+        if(ZMacroClient.getInstance().isSelectedActive()){
+            if(ZMacroClient.getInstance().getSelected().onPacketSent(packet)){
                 ci.cancel();
             }
         }

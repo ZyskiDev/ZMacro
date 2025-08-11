@@ -1,7 +1,7 @@
 package net.zyski.zmacro.client.mixins;
 
 import net.minecraft.client.MouseHandler;
-import net.zyski.zmacro.client.ZmacroClient;
+import net.zyski.zmacro.client.ZMacroClient;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -12,7 +12,7 @@ public class MouseHandlerMixin {
 
     @Inject(method = "grabMouse", at = @At("HEAD"), cancellable = true)
     public void grabMouse(CallbackInfo ci) {
-        if (ZmacroClient.getInstance().blockMouseGrabbing) {
+        if (ZMacroClient.getInstance().blockMouseGrabbing) {
             ci.cancel();
         }
     }
@@ -20,7 +20,7 @@ public class MouseHandlerMixin {
 
     @Inject(method = "onPress", at = @At("HEAD"), cancellable = true)
     private void onMousePress(long window, int button, int action, int mods, CallbackInfo ci) {
-        if (ZmacroClient.getInstance().blockMouseGrabbing) {
+        if (ZMacroClient.getInstance().blockMouseGrabbing) {
             if ((button == 0 || button == 1) && action == 1) {
                 ci.cancel();
             }

@@ -5,7 +5,7 @@ import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.LevelRenderer;
-import net.zyski.zmacro.client.ZmacroClient;
+import net.zyski.zmacro.client.ZMacroClient;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.Mixin;
@@ -22,15 +22,15 @@ public class LevelRenderMixin {
     private void postRender(GraphicsResourceAllocator allocator, DeltaTracker tickCounter, boolean blockOutline, Camera camera, Matrix4f positionMatrix, Matrix4f projectionMatrix, GpuBufferSlice fog, Vector4f fogColor, boolean shouldRenderSky, CallbackInfo ci)
     {
 
-        if(ZmacroClient.getInstance().getSelected() != null && ZmacroClient.getInstance().isSelectedActive())
-            ZmacroClient.getInstance().getSelected().postLevelRender(allocator, tickCounter, blockOutline, camera, positionMatrix, projectionMatrix, fog, fogColor, shouldRenderSky);
+        if(ZMacroClient.getInstance().getSelected() != null && ZMacroClient.getInstance().isSelectedActive())
+            ZMacroClient.getInstance().getSelected().postLevelRender(allocator, tickCounter, blockOutline, camera, positionMatrix, projectionMatrix, fog, fogColor, shouldRenderSky);
     }
 
     @Inject(at = @At("HEAD"),
             method = "renderLevel")
     private void preRender(GraphicsResourceAllocator allocator, DeltaTracker tickCounter, boolean blockOutline, Camera camera, Matrix4f positionMatrix, Matrix4f projectionMatrix, GpuBufferSlice fog, Vector4f fogColor, boolean shouldRenderSky, CallbackInfo ci)
     {
-        if(ZmacroClient.getInstance().getSelected() != null && ZmacroClient.getInstance().isSelectedActive())
-            ZmacroClient.getInstance().getSelected().preLevelRender(allocator, tickCounter, blockOutline, camera, positionMatrix, projectionMatrix, fog, fogColor, shouldRenderSky);
+        if(ZMacroClient.getInstance().getSelected() != null && ZMacroClient.getInstance().isSelectedActive())
+            ZMacroClient.getInstance().getSelected().preLevelRender(allocator, tickCounter, blockOutline, camera, positionMatrix, projectionMatrix, fog, fogColor, shouldRenderSky);
     }
 }

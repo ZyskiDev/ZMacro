@@ -12,7 +12,7 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.FormattedCharSequence;
-import net.zyski.zmacro.client.ZmacroClient;
+import net.zyski.zmacro.client.ZMacroClient;
 import net.zyski.zmacro.client.util.MacroWrapper;
 import org.jetbrains.annotations.NotNull;
 
@@ -147,7 +147,7 @@ public class MacroSelectionScreen extends Screen {
             @Override
             public boolean mouseClicked(double mouseX, double mouseY, int button) {
                 if (button == 0) {
-                    ZmacroClient.getInstance().setSelected(this.macro.getPath());
+                    ZMacroClient.getInstance().setSelected(this.macro.getPath());
                     Minecraft.getInstance().setScreen(null);
                     return true;
                 }
