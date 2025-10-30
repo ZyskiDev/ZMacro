@@ -17,7 +17,9 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.phys.Vec3;
 import net.zyski.zmacro.client.ZMacroClient;
+import net.zyski.zmacro.client.api.ZAPI;
 import net.zyski.zmacro.client.chat.ChatEvent;
 import net.zyski.zmacro.client.util.SleepUtil;
 import org.joml.Matrix4f;
@@ -28,6 +30,8 @@ import java.util.List;
 import java.util.function.BooleanSupplier;
 
 public interface ZMacro {
+
+    public ZAPI api = new ZAPI();
 
     void start();
 
@@ -127,5 +131,9 @@ public interface ZMacro {
     default void preLevelRender(GraphicsResourceAllocator allocator, DeltaTracker tickCounter, boolean blockOutline, Camera camera, Matrix4f positionMatrix, Matrix4f projectionMatrix, GpuBufferSlice fog, Vector4f fogColor, boolean shouldRenderSky) {
 
 
+    }
+
+    default boolean onPlayerMove(Vec3 travelVec){
+        return false;
     }
 }

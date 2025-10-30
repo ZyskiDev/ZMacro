@@ -6,13 +6,17 @@
   "client": [
     "KeyboardHandlerMixin",
     "LevelRenderMixin",
+    "MinecraftMixin",
     "MouseHandlerMixin",
-    "ScreenMixin"
+    "ScreenMixin",
+    "ZConnectScreen"
   ],
   "injectors": {
     "defaultRequire": 1
   },
   "mixins": [
-    "ConnectionMixin"
+    "LivingEntityMixin",
+    "PacketDecoderMixin",
+    "PacketEncoderMixin"
   ]
 }

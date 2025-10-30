@@ -20,6 +20,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.zyski.zmacro.client.Macro.Macro;
 import net.zyski.zmacro.client.Macro.ZMacro;
+import net.zyski.zmacro.client.api.ZConnection;
 import net.zyski.zmacro.client.chat.GameChatEvent;
 import net.zyski.zmacro.client.chat.PlayerChatEvent;
 import net.zyski.zmacro.client.screen.MacroSelectionScreen;
@@ -48,6 +49,7 @@ public class ZMacroClient implements ClientModInitializer {
 
     private static ZMacroClient instance;
     public boolean blockMouseGrabbing = false;
+    public boolean blockPlayerMovement = false;
     public KeyMapping OPEN_GUI = KeyBindingHelper.registerKeyBinding(
             new KeyMapping("Open GUI", InputConstants.Type.KEYSYM, InputConstants.KEY_EQUALS, "ZMacro")
     );
@@ -59,6 +61,10 @@ public class ZMacroClient implements ClientModInitializer {
         return instance;
     }
 
+    static boolean rejoin = false;
+    private static String dimension = null;
+    private static long nextDimensionPing = -1;
+    private static long DIMENSION_PING_INTERVAL = 300000;
 
     @Override
     public void onInitializeClient() {
@@ -150,14 +156,20 @@ public class ZMacroClient implements ClientModInitializer {
     private void registerTickThread() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (selected != null && selected.isActive()) {
-                if (SleepUtil.isSleeping() && SleepUtil.getBreakSleepCondition() != null && SleepUtil.getSleepTimeout() > 0) {
-                    if ((SleepUtil.getBreakSleepCondition().getAsBoolean()) || (System.currentTimeMillis() > SleepUtil.getSleepTimeout())) {
-                        selected.stopSleep();
+                if(rejoin && ZConnection.shouldReconnect()){
+                    ZConnection.reconnect();
+                }else{
+                    if(System.currentTimeMillis() >= nextDimensionPing && !ZConnection.shouldReconnect() && rejoin){
+                        pingDimension();
                     }
-                } else {
-                    selected.loop();
+                    if (SleepUtil.isSleeping() && SleepUtil.getBreakSleepCondition() != null && SleepUtil.getSleepTimeout() > 0) {
+                        if ((SleepUtil.getBreakSleepCondition().getAsBoolean()) || (System.currentTimeMillis() > SleepUtil.getSleepTimeout())) {
+                            selected.stopSleep();
+                        }
+                    } else {
+                        selected.loop();
+                    }
                 }
-
             }
         });
     }
@@ -169,7 +181,6 @@ public class ZMacroClient implements ClientModInitializer {
                 selected.onWorldRender(worldRenderContext);
             }
         });
-
 
         HudElementRegistry.addLast(ResourceLocation.fromNamespaceAndPath("zmacro", "macro_layer"), (guiGraphics, tickDelta) -> {
             Minecraft client = Minecraft.getInstance();
@@ -238,6 +249,12 @@ public class ZMacroClient implements ClientModInitializer {
                 } else {
                     message("No Macro Running.");
                 }
+                return 1;
+            }));
+
+            dispatcher.register(ClientCommandManager.literal("togglereconnect").executes(context -> {
+                    rejoin = !rejoin;
+                    message("[ZMacro] Attempt Reconnection Toggled: " + rejoin);
                 return 1;
             }));
         }));
@@ -354,11 +371,38 @@ public class ZMacroClient implements ClientModInitializer {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        if (selected != null)
+        if (selected != null) {
             selected.toggle();
+            pingDimension();
+        }
     }
 
     public File getDirectory() {
         return directory;
+    }
+
+    public static void pingDimension(){
+        if(Minecraft.getInstance().getConnection() != null){
+            Minecraft.getInstance().getConnection().sendCommand("profile");
+            nextDimensionPing = (System.currentTimeMillis() + DIMENSION_PING_INTERVAL);
+        }
+    }
+
+    public static void checkDimension(String string) {
+        if (dimension == null) {
+            dimension = string;
+            if (Minecraft.getInstance().player != null)
+                Minecraft.getInstance().player.displayClientMessage(Component.literal("Dimension Set To: " + string.toUpperCase()), false);
+        } else {
+            if (!dimension.equals(string) && rejoin) {
+                if(Minecraft.getInstance().getConnection() != null){
+                    Minecraft.getInstance().getConnection().sendCommand(dimension);
+                }
+            }
+        }
+    }
+
+    public static void updateDimensionPing(long ms){
+        nextDimensionPing = (System.currentTimeMillis() + ms);
     }
 }

@@ -11,7 +11,7 @@
   "environment": "client",
   "entrypoints": {
     "client": [
-      "net.zyski.zmacro.client.ZmacroClient"
+      "net.zyski.zmacro.client.ZMacroClient"
     ],
     "main": [
       "net.zyski.zmacro.Zmacro"
